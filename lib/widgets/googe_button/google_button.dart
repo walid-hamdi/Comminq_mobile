@@ -68,7 +68,6 @@ class _GoogleButtonState extends State<GoogleButton> {
             },
           );
         });
-        ;
       }
     } catch (error) {
       debugPrint('Error: $error');
