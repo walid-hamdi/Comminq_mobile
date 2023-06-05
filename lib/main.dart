@@ -8,3 +8,6 @@ void main() async {
   await dotenv.load(fileName: Environment.filename);
   runApp(const MyApp());
 }
+
+
+// flutter run --web-port=50951

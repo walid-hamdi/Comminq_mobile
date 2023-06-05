@@ -11,4 +11,8 @@ class Environment {
   static String get endPoint {
     return dotenv.env["ENDPOINT"] ?? "nothing";
   }
+
+  static String get clientId {
+    return dotenv.env["CLIENT_ID"] ?? "nothing";
+  }
 }

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../../utils/constants.dart';
+import '../../utils/helpers.dart';
 
 class SplashScreenView extends StatefulWidget {
   const SplashScreenView({Key? key}) : super(key: key);
@@ -15,7 +16,13 @@ class _SplashScreenViewState extends State<SplashScreenView> {
   void initState() {
     super.initState();
     Timer(const Duration(seconds: 3), () {
-      Navigator.of(context).pushReplacementNamed(Routes.home);
+      // Home or login
+      // if (true) {
+      //   navigateToRoute(context, Routes.login);
+      // } else {
+      //   navigateToRoute(context, Routes.home);
+      // }
+      navigateToRoute(context, Routes.login);
     });
   }
 

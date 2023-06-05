@@ -5,6 +5,7 @@ on:
       - master
 env:
   ENDPOINT: ${{ secrets.ENDPOINT }}
+  CLIENT_ID: ${{ secrets.CLIENT_ID }}
 
 jobs:
   flutter_test:
