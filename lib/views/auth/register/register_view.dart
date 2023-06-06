@@ -4,8 +4,10 @@ import 'package:comminq/utils/helpers.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
+import '../../../utils/dialog_utils.dart';
 import '../../../utils/email_validator.dart';
-import '../../../widgets/googe_button/google_button.dart';
+import '../../../utils/secure_storage.dart';
+import '../../../widgets/google_button/google_button.dart';
 
 class RegisterFormValues {
   String name;
@@ -66,34 +68,36 @@ class _RegisterViewState extends State<RegisterView> {
     setState(() {
       isLoading = true;
     });
+    final TokenManager tokenManager = TokenManager();
+
     userHttpService.register(data).then((response) {
       if (response.statusCode == 200) {
-        navigateToRoute(context, Routes.home);
+        final Map<String, dynamic> result = extractFromResponse(response?.data);
+        final String token = result['token'];
+
+        if (token.isNotEmpty) {
+          tokenManager.saveToken(token).then((_) {
+            navigateToRoute(context, Routes.home);
+          }).catchError((error) {
+            debugPrint('Error writing token to secure storage: $error');
+          });
+        } else {
+          // Handle missing token error
+          debugPrint('Token not found in the response');
+        }
       } else {
         // Handle login error
         debugPrint('Register failed with status code ${response.statusCode}');
       }
     }).catchError((error) {
-      debugPrint("ERROR: ${error.response}");
+      final Map<String, dynamic> result =
+          extractFromResponse(error.response?.data);
 
-      final errorMessage = error.response.toString();
-
-      showDialog(
+      final String errorMessage = result['error'];
+      showErrorDialog(
         context: context,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            title: const Text('Registration Error'),
-            content: Text(errorMessage),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.of(context).pop();
-                },
-                child: const Text('OK'),
-              ),
-            ],
-          );
-        },
+        title: "Registration Error",
+        content: errorMessage,
       );
     }).whenComplete(() {
       setState(() {

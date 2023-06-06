@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 import '../../models/environment.dart';
+import '../../utils/secure_storage.dart';
 
 class GoogleButton extends StatefulWidget {
   const GoogleButton({Key? key}) : super(key: key);
@@ -30,20 +31,31 @@ class _GoogleButtonState extends State<GoogleButton> {
         setState(() {
           isLoading = true;
         });
-        userHttpService
-            .googleLogin(googleKey.accessToken)
-            .then(
-              (response) => {
-                if (response.statusCode == 200)
-                  {navigateToRoute(context, Routes.home)}
-                else
-                  {
-                    debugPrint(
-                        'Login with Google failed with status code ${response.statusCode}')
-                  }
-              },
-            )
-            .whenComplete(() {
+        final TokenManager tokenManager = TokenManager();
+
+        userHttpService.googleLogin(googleKey.accessToken!).then(
+          (response) {
+            if (response.statusCode == 200) {
+              final Map<String, dynamic> result =
+                  extractFromResponse(response.data);
+              final String token = result['token'];
+
+              if (token.isNotEmpty) {
+                tokenManager.saveToken(token).then((_) {
+                  navigateToRoute(context, Routes.home);
+                }).catchError((error) {
+                  debugPrint('Error writing token to secure storage: $error');
+                });
+              } else {
+                // Handle missing token error
+                debugPrint('Token not found in the response');
+              }
+            } else {
+              debugPrint(
+                  'Login with Google failed with status code ${response.statusCode}');
+            }
+          },
+        ).whenComplete(() {
           setState(() {
             isLoading = false;
           });

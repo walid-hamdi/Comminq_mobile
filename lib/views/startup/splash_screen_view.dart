@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import '../../utils/constants.dart';
 import '../../utils/helpers.dart';
@@ -12,17 +13,20 @@ class SplashScreenView extends StatefulWidget {
 }
 
 class _SplashScreenViewState extends State<SplashScreenView> {
+  final _secureStorage = const FlutterSecureStorage();
+
   @override
   void initState() {
     super.initState();
-    Timer(const Duration(seconds: 3), () {
+    Timer(const Duration(seconds: 3), () async {
       // Home or login
-      // if (true) {
-      //   navigateToRoute(context, Routes.login);
-      // } else {
-      //   navigateToRoute(context, Routes.home);
-      // }
-      navigateToRoute(context, Routes.login);
+      _secureStorage.read(key: 'token').then((token) {
+        if (token != null) {
+          navigateToRoute(context, Routes.home);
+        } else {
+          navigateToRoute(context, Routes.login);
+        }
+      });
     });
   }
 

@@ -1,10 +1,12 @@
 import 'package:comminq/utils/constants.dart';
 import 'package:comminq/utils/helpers.dart';
+import 'package:comminq/utils/secure_storage.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
 import '../../../services/user_service.dart';
-import '../../../widgets/googe_button/google_button.dart';
+import '../../../utils/dialog_utils.dart';
+import '../../../widgets/google_button/google_button.dart';
 
 class LoginFormValues {
   String email;
@@ -38,7 +40,6 @@ class _LoginViewState extends State<LoginView> {
       LoginFormValues formValues =
           LoginFormValues(email: email, password: password);
 
-      // Call your login API or perform any other login-related actions here
       _loginUser(formValues);
     }
   }
@@ -53,34 +54,36 @@ class _LoginViewState extends State<LoginView> {
       isLoading = true;
     });
 
+    final TokenManager tokenManager = TokenManager();
+
     userHttpService.login(data).then((response) {
       if (response.statusCode == 200) {
-        navigateToRoute(context, Routes.home);
+        final Map<String, dynamic> result = extractFromResponse(response.data);
+        final String token = result['token'];
+
+        if (token.isNotEmpty) {
+          tokenManager.saveToken(token).then((_) {
+            navigateToRoute(context, Routes.home);
+          }).catchError((error) {
+            debugPrint('Error writing token to secure storage: $error');
+          });
+        } else {
+          // Handle missing token error
+          debugPrint('Token not found in the response');
+        }
       } else {
         // Handle login error
         debugPrint('Login failed with status code ${response.statusCode}');
       }
     }).catchError((error) {
-      debugPrint("ERROR: ${error.response}");
+      final Map<String, dynamic> result =
+          extractFromResponse(error.response?.data);
 
-      final errorMessage = error.response.toString();
-
-      showDialog(
+      final String errorMessage = result['error'];
+      showErrorDialog(
         context: context,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            title: const Text('Login Error'),
-            content: Text(errorMessage),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.of(context).pop();
-                },
-                child: const Text('OK'),
-              ),
-            ],
-          );
-        },
+        title: "Login Error",
+        content: errorMessage,
       );
     }).whenComplete(() {
       setState(() {
