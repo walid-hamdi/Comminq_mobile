@@ -4,8 +4,10 @@ import 'package:comminq/utils/helpers.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
+import '../../../utils/dialog_utils.dart';
 import '../../../utils/email_validator.dart';
-import '../../../widgets/googe_button/google_button.dart';
+import '../../../utils/secure_storage.dart';
+import '../../../widgets/google_button/google_button.dart';
 
 class RegisterFormValues {
   String name;
@@ -22,7 +24,7 @@ class RegisterFormValues {
 }
 
 class RegisterView extends StatefulWidget {
-  const RegisterView({super.key});
+  const RegisterView({Key? key}) : super(key: key);
 
   @override
   createState() => _RegisterViewState();
@@ -66,34 +68,36 @@ class _RegisterViewState extends State<RegisterView> {
     setState(() {
       isLoading = true;
     });
+    final TokenManager tokenManager = TokenManager();
+
     userHttpService.register(data).then((response) {
       if (response.statusCode == 200) {
-        navigateToRoute(context, Routes.home);
+        final Map<String, dynamic> result = extractFromResponse(response.data);
+        final String token = result['token'];
+
+        if (token.isNotEmpty) {
+          tokenManager.saveToken(token).then((_) {
+            navigateToRoute(context, Routes.home);
+          }).catchError((error) {
+            debugPrint('Error writing token to secure storage: $error');
+          });
+        } else {
+          // Handle missing token error
+          debugPrint('Token not found in the response');
+        }
       } else {
         // Handle login error
         debugPrint('Register failed with status code ${response.statusCode}');
       }
     }).catchError((error) {
-      debugPrint("ERROR: ${error.response}");
+      final Map<String, dynamic> result =
+          extractFromResponse(error.response?.data);
 
-      final errorMessage = error.response.toString();
-
-      showDialog(
+      final String errorMessage = result['error'];
+      showErrorDialog(
         context: context,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            title: const Text('Registration Error'),
-            content: Text(errorMessage),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.of(context).pop();
-                },
-                child: const Text('OK'),
-              ),
-            ],
-          );
-        },
+        title: "Registration Error",
+        content: errorMessage,
       );
     }).whenComplete(() {
       setState(() {
@@ -113,6 +117,7 @@ class _RegisterViewState extends State<RegisterView> {
             autovalidateMode:
                 AutovalidateMode.always, // Enable continuous validation
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 const SizedBox(height: 100),
                 const Text(
@@ -123,7 +128,11 @@ class _RegisterViewState extends State<RegisterView> {
                 const SizedBox(height: 24),
                 TextFormField(
                   controller: _nameController,
-                  decoration: const InputDecoration(labelText: 'Name'),
+                  decoration: const InputDecoration(
+                    labelText: 'Name',
+                    contentPadding:
+                        EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                  ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
                       return 'Please enter your name';
@@ -135,7 +144,11 @@ class _RegisterViewState extends State<RegisterView> {
                 TextFormField(
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
-                  decoration: const InputDecoration(labelText: 'Email address'),
+                  decoration: const InputDecoration(
+                    labelText: 'Email address',
+                    contentPadding:
+                        EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                  ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
                       return 'Please enter your email address';
@@ -149,7 +162,11 @@ class _RegisterViewState extends State<RegisterView> {
                 TextFormField(
                   controller: _passwordController,
                   obscureText: true,
-                  decoration: const InputDecoration(labelText: 'Password'),
+                  decoration: const InputDecoration(
+                    labelText: 'Password',
+                    contentPadding:
+                        EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                  ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
                       return 'Please enter your password';
@@ -163,8 +180,11 @@ class _RegisterViewState extends State<RegisterView> {
                 TextFormField(
                   controller: _confirmPasswordController,
                   obscureText: true,
-                  decoration:
-                      const InputDecoration(labelText: 'Confirm Password'),
+                  decoration: const InputDecoration(
+                    labelText: 'Confirm Password',
+                    contentPadding:
+                        EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                  ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
                       return 'Please confirm your password';
@@ -178,10 +198,12 @@ class _RegisterViewState extends State<RegisterView> {
                 ElevatedButton(
                   onPressed: _submitForm,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: isLoading
-                        ? Colors.grey
-                        : Colors
-                            .blue, // Button color when not loading vs loading
+                    padding: const EdgeInsets.all(16.0),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8.0),
+                    ),
+                    backgroundColor: isLoading ? Colors.grey : Colors.blue,
+                    textStyle: const TextStyle(fontSize: 16),
                   ),
                   child: Stack(
                     alignment: Alignment.center,
@@ -199,27 +221,30 @@ class _RegisterViewState extends State<RegisterView> {
                 ),
                 const SizedBox(height: 16),
                 const GoogleButton(),
-                const SizedBox(height: 16),
-                RichText(
-                  text: TextSpan(
-                    text: 'Already have an account? ',
-                    style: const TextStyle(fontSize: 16, color: Colors.black),
-                    children: [
-                      TextSpan(
-                        text: 'Sign in',
-                        style: const TextStyle(
-                          fontSize: 16,
-                          color: Colors.blue,
-                          decoration: TextDecoration.underline,
+                const SizedBox(height: 24),
+                Container(
+                  alignment: Alignment.center,
+                  child: RichText(
+                    text: TextSpan(
+                      text: 'Already have an account? ',
+                      style: const TextStyle(fontSize: 16, color: Colors.black),
+                      children: [
+                        TextSpan(
+                          text: 'Sign in',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            color: Colors.blue,
+                            decoration: TextDecoration.underline,
+                          ),
+                          recognizer: TapGestureRecognizer()
+                            ..onTap = () {
+                              navigateToRoute(context, Routes.login);
+                            },
                         ),
-                        recognizer: TapGestureRecognizer()
-                          ..onTap = () {
-                            navigateToRoute(context, Routes.login);
-                          },
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                )
+                ),
               ],
             ),
           ),
