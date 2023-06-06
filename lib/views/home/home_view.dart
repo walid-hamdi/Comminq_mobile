@@ -18,6 +18,9 @@ class HomeView extends StatefulWidget {
 class _HomeViewState extends State<HomeView> {
   final _secureStorage = TokenManager();
   bool isLoading = false;
+  String? username;
+  String? email;
+  String? picture;
   List<String> rooms = ['Room 1', 'Room 2', 'Room 3', 'Room 4'];
 
   void _showProfileModal(BuildContext context) {
@@ -48,13 +51,37 @@ class _HomeViewState extends State<HomeView> {
                 : Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      CircleAvatar(
-                        backgroundImage: NetworkImage(profilePicture),
-                        radius: 50,
+                      GestureDetector(
+                        onTap: () {
+                          // Handle avatar click
+                          _showEditAvatarModal(context);
+                        },
+                        child: Stack(
+                          alignment: Alignment.bottomRight,
+                          children: [
+                            CircleAvatar(
+                              backgroundImage: NetworkImage(profilePicture),
+                              radius: 50,
+                            ),
+                            const Icon(Icons.edit, size: 20),
+                          ],
+                        ),
                       ),
                       const SizedBox(height: 16),
-                      Text('Username: $profileUsername'),
-                      Text('Email: $profileEmail'),
+                      GestureDetector(
+                        onTap: () {
+                          // Handle username click
+                          _showEditUsernameModal(context);
+                        },
+                        child: Text('Username: $profileUsername'),
+                      ),
+                      GestureDetector(
+                        onTap: () {
+                          // Handle email click
+                          _showEditEmailModal(context);
+                        },
+                        child: Text('Email: $profileEmail'),
+                      ),
                       // Text('Followers: ${profile.followersCount}'),
                       // Text('Following: ${profile.followingCount}'),
                     ],
@@ -84,32 +111,13 @@ class _HomeViewState extends State<HomeView> {
     });
   }
 
-  void _navigateToSettings(BuildContext context) {
+  void _performLogout(BuildContext context) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Settings'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ListTile(
-                leading: const Icon(Icons.logout),
-                title: const Text('Logout'),
-                onTap: () {
-                  _performLogout(context);
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.person),
-                title: const Text('Update Profile'),
-                onTap: () {
-                  Navigator.of(context).pop();
-                  _showUpdateProfileModal(context);
-                },
-              ),
-            ],
-          ),
+          title: const Text('Confirmation'),
+          content: const Text('Are you sure you want to logout?'),
           actions: [
             TextButton(
               onPressed: () {
@@ -117,13 +125,20 @@ class _HomeViewState extends State<HomeView> {
               },
               child: const Text('Cancel'),
             ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                _logout(context);
+              },
+              child: const Text('Logout'),
+            ),
           ],
         );
       },
     );
   }
 
-  void _performLogout(BuildContext context) {
+  void _logout(BuildContext context) {
     _secureStorage.deleteToken().then((_) {
       final googleSignIn = GoogleSignIn(
         clientId: Environment.clientId,
@@ -136,23 +151,63 @@ class _HomeViewState extends State<HomeView> {
     });
   }
 
-  void _showUpdateProfileModal(BuildContext context) {
+  void _showEditAvatarModal(BuildContext context) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Update Profile'),
+          title: const Text('Edit Avatar'),
+          content: const Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Add form field or button to edit avatar
+              Text('Edit Avatar'),
+              // Add more form fields as needed
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                // Perform edit avatar logic
+
+                // Example:
+                // _performEditAvatar(context);
+
+                // Close the modal
+                Navigator.of(context).pop();
+              },
+              child: const Text('Save'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showEditUsernameModal(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Edit Username'),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Add form fields to update user information
+              // Add form field or button to edit username
               TextFormField(
+                initialValue: username,
                 decoration: const InputDecoration(labelText: 'Username'),
-                // Handle username input
-              ),
-              TextFormField(
-                decoration: const InputDecoration(labelText: 'Email'),
-                // Handle email input
+                onChanged: (value) {
+                  setState(() {
+                    username = value;
+                  });
+                },
               ),
               // Add more form fields as needed
             ],
@@ -166,9 +221,15 @@ class _HomeViewState extends State<HomeView> {
             ),
             TextButton(
               onPressed: () {
-                _performUpdateProfile(context);
+                // Perform edit username logic
+
+                // Example:
+                // _performEditUsername(context);
+
+                // Close the modal
+                Navigator.of(context).pop();
               },
-              child: const Text('Update'),
+              child: const Text('Save'),
             ),
           ],
         );
@@ -176,29 +237,46 @@ class _HomeViewState extends State<HomeView> {
     );
   }
 
-  void _performUpdateProfile(BuildContext context) {
-    // Perform the update profile logic
-    // You can access the form field values and update the user's information
-
-    // Example:
-    // final username = _usernameController.text;
-    // final email = _emailController.text;
-
-    // Call the API or perform necessary operations to update the user's information
-
-    // Once the update is successful, you can show a success message and close the modal
+  void _showEditEmailModal(BuildContext context) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Success'),
-          content: const Text('Profile updated successfully!'),
+          title: const Text('Edit Email'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Add form field or button to edit email
+              TextFormField(
+                initialValue: email,
+                decoration: const InputDecoration(labelText: 'Email'),
+                onChanged: (value) {
+                  setState(() {
+                    email = value;
+                  });
+                },
+              ),
+              // Add more form fields as needed
+            ],
+          ),
           actions: [
             TextButton(
               onPressed: () {
                 Navigator.of(context).pop();
               },
-              child: const Text('Close'),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                // Perform edit email logic
+
+                // Example:
+                // _performEditEmail(context);
+
+                // Close the modal
+                Navigator.of(context).pop();
+              },
+              child: const Text('Save'),
             ),
           ],
         );
@@ -221,11 +299,30 @@ class _HomeViewState extends State<HomeView> {
       appBar: AppBar(
         title: const Text('Home'),
         actions: [
-          IconButton(
-            onPressed: () {
-              _showAddRoomModal(context);
+          PopupMenuButton<String>(
+            onSelected: (value) {
+              if (value == 'profile') {
+                _showProfileModal(context);
+              } else if (value == 'logout') {
+                _performLogout(context);
+              }
             },
-            icon: const Icon(Icons.add),
+            itemBuilder: (BuildContext context) => [
+              const PopupMenuItem(
+                value: 'profile',
+                child: ListTile(
+                  leading: Icon(Icons.person),
+                  title: Text('Profile'),
+                ),
+              ),
+              const PopupMenuItem(
+                value: 'logout',
+                child: ListTile(
+                  leading: Icon(Icons.logout),
+                  title: Text('Logout'),
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -247,7 +344,7 @@ class _HomeViewState extends State<HomeView> {
                   return ListTile(
                     title: Text(room),
                     onTap: () {
-// Handle room selection
+                      // Handle room selection
                     },
                   );
                 },
@@ -256,95 +353,6 @@ class _HomeViewState extends State<HomeView> {
           ],
         ),
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: 'Home',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person),
-            label: 'Profile',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.settings),
-            label: 'Settings',
-          ),
-        ],
-        currentIndex: 0,
-        onTap: (index) {
-          if (index == 1) {
-            _showProfileModal(context);
-          } else if (index == 2) {
-            _navigateToSettings(context);
-          }
-        },
-      ),
-    );
-  }
-
-  void _showAddRoomModal(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Add Room'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-// Add form fields to add room information
-              TextFormField(
-                decoration: const InputDecoration(labelText: 'Room Name'),
-// Handle room name input
-              ),
-// Add more form fields as needed
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: const Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () {
-                _performAddRoom(context);
-              },
-              child: const Text('Add'),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  void _performAddRoom(BuildContext context) {
-// Perform the add room logic
-// You can access the form field values and add the room
-
-// Example:
-// final roomName = _roomNameController.text;
-
-// Call the API or perform necessary operations to add the room
-
-// Once the room is added successfully, you can show a success message and close the modal
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Success'),
-          content: const Text('Room added successfully!'),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: const Text('Close'),
-            ),
-          ],
-        );
-      },
     );
   }
 }

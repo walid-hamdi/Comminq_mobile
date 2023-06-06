@@ -19,7 +19,7 @@ class LoginFormValues {
 }
 
 class LoginView extends StatefulWidget {
-  const LoginView({super.key});
+  const LoginView({Key? key}) : super(key: key);
 
   @override
   createState() => _LoginViewState();
@@ -95,101 +95,118 @@ class _LoginViewState extends State<LoginView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Form(
-            key: _formKey,
-            autovalidateMode: AutovalidateMode.always,
-            child: Column(
-              children: [
-                const SizedBox(height: 100),
-                const Text(
-                  '🔐 Unlock the Comminq',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 24),
-                TextFormField(
-                  controller: _emailController,
-                  keyboardType: TextInputType.emailAddress,
-                  decoration: const InputDecoration(labelText: 'Email address'),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter your email address';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: _passwordController,
-                  obscureText: true,
-                  decoration: const InputDecoration(labelText: 'Password'),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter your password';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 24),
-                ElevatedButton(
-                  onPressed: _submitForm,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: isLoading
-                        ? Colors.grey
-                        : Colors
-                            .blue, // Button color when not loading vs loading
+      body: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 16.0),
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Form(
+              key: _formKey,
+              autovalidateMode: AutovalidateMode.always,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const SizedBox(height: 100),
+                  const Text(
+                    '🔐 Unlock the Comminq',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                   ),
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      Visibility(
-                        visible: !isLoading,
-                        child: const Text('Sign in'),
+                  const SizedBox(height: 24),
+                  TextFormField(
+                    controller: _emailController,
+                    keyboardType: TextInputType.emailAddress,
+                    decoration: const InputDecoration(
+                      labelText: 'Email address',
+                      border: OutlineInputBorder(),
+                      contentPadding: EdgeInsets.all(12.0),
+                    ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter your email address';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: _passwordController,
+                    obscureText: true,
+                    decoration: const InputDecoration(
+                      labelText: 'Password',
+                      border: OutlineInputBorder(),
+                      contentPadding: EdgeInsets.all(12.0),
+                    ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter your password';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 24),
+                  ElevatedButton(
+                    onPressed: _submitForm,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: isLoading ? Colors.grey : Colors.blue,
+                      padding: const EdgeInsets.all(16.0),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8.0),
                       ),
-                      Visibility(
-                        visible: isLoading,
-                        child: const CircularProgressIndicator(),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 16),
-                const GoogleButton(),
-                const SizedBox(height: 16),
-                TextButton(
-                  onPressed: () {
-                    // Handle forgot password
-                  },
-                  child: const Text(
-                    'Forgot password?',
-                    style: TextStyle(color: Colors.blue),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                RichText(
-                  text: TextSpan(
-                    text: 'New to Comminq? ',
-                    style: const TextStyle(fontSize: 16, color: Colors.grey),
-                    children: [
-                      TextSpan(
-                        text: 'Join now',
-                        style: const TextStyle(
-                          fontSize: 16,
-                          color: Colors.blue,
-                          decoration: TextDecoration.underline,
+                    ),
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        Visibility(
+                          visible: !isLoading,
+                          child: const Text('Sign in'),
                         ),
-                        recognizer: TapGestureRecognizer()
-                          ..onTap = () {
-                            navigateToRoute(context, Routes.register);
-                          },
-                      ),
-                    ],
+                        Visibility(
+                          visible: isLoading,
+                          child: const CircularProgressIndicator(),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                  const SizedBox(height: 16),
+                  const GoogleButton(),
+                  const SizedBox(height: 16),
+                  TextButton(
+                    onPressed: () {
+                      // Handle forgot password
+                    },
+                    child: const Text(
+                      'Forgot password?',
+                      style: TextStyle(color: Colors.blue),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  Container(
+                    alignment: Alignment.center,
+                    child: RichText(
+                      text: TextSpan(
+                        text: 'New to Comminq? ',
+                        style:
+                            const TextStyle(fontSize: 16, color: Colors.grey),
+                        children: [
+                          TextSpan(
+                            text: 'Join now',
+                            style: const TextStyle(
+                              fontSize: 16,
+                              color: Colors.blue,
+                              decoration: TextDecoration.underline,
+                            ),
+                            recognizer: TapGestureRecognizer()
+                              ..onTap = () {
+                                navigateToRoute(context, Routes.register);
+                              },
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),

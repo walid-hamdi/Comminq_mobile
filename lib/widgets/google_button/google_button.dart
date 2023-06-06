@@ -109,8 +109,8 @@ class _GoogleButtonState extends State<GoogleButton> {
     return ElevatedButton(
       onPressed: isLoading ? null : _handleButtonPress,
       style: ElevatedButton.styleFrom(
-        backgroundColor: Colors.blue, // Button color
-        foregroundColor: Colors.white, // Text color
+        backgroundColor: Colors.white, // Button color
+        foregroundColor: Colors.black, // Text color // Text color
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(8.0),
         ),
@@ -124,7 +124,7 @@ class _GoogleButtonState extends State<GoogleButton> {
             child: const Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.plus_one), // Google icon
+                Icon(Icons.ac_unit, color: Colors.blue),
                 SizedBox(width: 8.0),
                 Text(
                   'Sign in with Google',
