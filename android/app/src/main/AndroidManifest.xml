@@ -2,8 +2,10 @@
     package="com.walidhamdi.comminq">
 
     <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-sdk android:minSdkVersion="18" />
 
    <application
+        tools:overrideLibrary="com.it_nomads.fluttersecurestorage"
         android:label="Comminq"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
