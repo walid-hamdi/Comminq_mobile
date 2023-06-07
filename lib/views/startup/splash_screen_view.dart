@@ -1,8 +1,8 @@
 import 'dart:async';
+import 'package:comminq/utils/constants.dart';
+import 'package:comminq/utils/secure_storage.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
-import '../../utils/constants.dart';
 import '../../utils/helpers.dart';
 
 class SplashScreenView extends StatefulWidget {
@@ -13,14 +13,14 @@ class SplashScreenView extends StatefulWidget {
 }
 
 class _SplashScreenViewState extends State<SplashScreenView> {
-  final _secureStorage = const FlutterSecureStorage();
+  final TokenManager tokenManager = TokenManager();
 
   @override
   void initState() {
     super.initState();
-    Timer(const Duration(seconds: 3), () async {
+    Timer(const Duration(seconds: 2), () async {
       // Home or login
-      _secureStorage.read(key: 'token').then((token) {
+      tokenManager.getToken().then((token) {
         if (token != null) {
           navigateToRoute(context, Routes.home);
         } else {
@@ -33,11 +33,11 @@ class _SplashScreenViewState extends State<SplashScreenView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      resizeToAvoidBottomInset: false,
-      body: Container(
-        color: Colors.blue[600],
-        child: Center(
-          child: Image.asset('assets/icons/icon.png'),
+      body: Center(
+        child: Image.asset(
+          'assets/icons/icon.png',
+          width: 250,
+          height: 250,
         ),
       ),
     );

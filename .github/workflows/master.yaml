@@ -6,6 +6,9 @@ on:
 env:
   ENDPOINT: ${{ secrets.ENDPOINT }}
   CLIENT_ID: ${{ secrets.CLIENT_ID }}
+  SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+
+  
 
 jobs:
   flutter_test:
