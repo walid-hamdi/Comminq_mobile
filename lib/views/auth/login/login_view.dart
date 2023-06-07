@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 
 import '../../../services/user_service.dart';
 import '../../../utils/dialog_utils.dart';
+import '../../../widgets/common/loading_indicator.dart';
 import '../../../widgets/google_button/google_button.dart';
 
 class LoginFormValues {
@@ -158,7 +159,8 @@ class _LoginViewState extends State<LoginView> {
                     ElevatedButton(
                       onPressed: _submitForm,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: isLoading ? Colors.grey : Colors.blue,
+                        backgroundColor:
+                            isLoading ? Colors.grey.shade200 : Colors.blue,
                         padding: const EdgeInsets.all(16.0),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8.0),
@@ -173,7 +175,7 @@ class _LoginViewState extends State<LoginView> {
                           ),
                           Visibility(
                             visible: isLoading,
-                            child: const CircularProgressIndicator(),
+                            child: const LoadingIndicator(),
                           ),
                         ],
                       ),

@@ -6,6 +6,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 
 import '../../models/environment.dart';
 import '../../utils/secure_storage.dart';
+import '../common/loading_indicator.dart';
 
 class GoogleButton extends StatefulWidget {
   const GoogleButton({Key? key}) : super(key: key);
@@ -133,10 +134,7 @@ class _GoogleButtonState extends State<GoogleButton> {
               ],
             ),
           ),
-          Visibility(
-            visible: isLoading,
-            child: const CircularProgressIndicator(),
-          ),
+          Visibility(visible: isLoading, child: const LoadingIndicator()),
         ],
       ),
     );

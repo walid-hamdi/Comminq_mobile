@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import '../../../utils/dialog_utils.dart';
 import '../../../utils/email_validator.dart';
 import '../../../utils/secure_storage.dart';
+import '../../../widgets/common/loading_indicator.dart';
 import '../../../widgets/google_button/google_button.dart';
 
 class RegisterFormValues {
@@ -211,7 +212,8 @@ class _RegisterViewState extends State<RegisterView> {
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8.0),
                       ),
-                      backgroundColor: isLoading ? Colors.grey : Colors.blue,
+                      backgroundColor:
+                          isLoading ? Colors.grey.shade200 : Colors.blue,
                       textStyle: const TextStyle(fontSize: 16),
                     ),
                     child: Stack(
@@ -223,7 +225,7 @@ class _RegisterViewState extends State<RegisterView> {
                         ),
                         Visibility(
                           visible: isLoading,
-                          child: const CircularProgressIndicator(),
+                          child: const LoadingIndicator(),
                         ),
                       ],
                     ),
@@ -237,7 +239,7 @@ class _RegisterViewState extends State<RegisterView> {
                       text: TextSpan(
                         text: 'Already have an account? ',
                         style:
-                            const TextStyle(fontSize: 16, color: Colors.black),
+                            const TextStyle(fontSize: 16, color: Colors.grey),
                         children: [
                           TextSpan(
                             text: 'Sign in',
