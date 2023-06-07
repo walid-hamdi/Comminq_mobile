@@ -119,7 +119,7 @@ class _GoogleButtonState extends State<GoogleButton> {
       onPressed: isLoading ? null : _handleButtonPress,
       style: ElevatedButton.styleFrom(
         backgroundColor: Colors.white, // Button color
-        foregroundColor: Colors.black, // Text color // Text color
+        foregroundColor: Colors.black, // Text color
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(8.0),
         ),
@@ -130,12 +130,16 @@ class _GoogleButtonState extends State<GoogleButton> {
         children: [
           Visibility(
             visible: !isLoading,
-            child: const Row(
+            child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.ac_unit, color: Colors.blue),
-                SizedBox(width: 8.0),
-                Text(
+                Image.asset(
+                  'assets/icons/google_icon.png', // Replace with the actual path to the image
+                  width: 24.0,
+                  height: 24.0,
+                ),
+                const SizedBox(width: 8.0),
+                const Text(
                   'Sign in with Google',
                   style: TextStyle(fontSize: 16.0),
                 ),

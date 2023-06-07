@@ -20,8 +20,6 @@ Future<void> main() async {
 // TODO:
 // hide env variables
 // handle sentry
-// login icon google
-
 
 
 // flutter run --web-port=50951
