@@ -15,4 +15,7 @@ class Environment {
   static String get clientId {
     return dotenv.env["CLIENT_ID"] ?? "nothing";
   }
+  static String get sentryDsn {
+    return dotenv.env["SENTRY_DSN"] ?? "nothing";
+  }
 }

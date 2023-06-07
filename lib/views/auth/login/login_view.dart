@@ -3,6 +3,7 @@ import 'package:comminq/utils/helpers.dart';
 import 'package:comminq/utils/secure_storage.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:sentry_flutter/sentry_flutter.dart';
 
 import '../../../services/user_service.dart';
 import '../../../utils/dialog_utils.dart';
@@ -57,40 +58,46 @@ class _LoginViewState extends State<LoginView> {
 
     final TokenManager tokenManager = TokenManager();
 
-    userHttpService.login(data).then((response) {
-      if (response.statusCode == 200) {
-        final Map<String, dynamic> result = extractFromResponse(response.data);
-        final String token = result['token'];
+    try {
+      userHttpService.login(data).then((response) {
+        if (response.statusCode == 200) {
+          final Map<String, dynamic> result =
+              extractFromResponse(response.data);
+          final String token = result['token'];
 
-        if (token.isNotEmpty) {
-          tokenManager.saveToken(token).then((_) {
-            navigateToRoute(context, Routes.home);
-          }).catchError((error) {
-            debugPrint('Error writing token to secure storage: $error');
-          });
+          if (token.isNotEmpty) {
+            tokenManager.saveToken(token).then((_) {
+              navigateToRoute(context, Routes.home);
+            }).catchError((error) {
+              debugPrint('Error writing token to secure storage: $error');
+            });
+          } else {
+            // Handle missing token error
+            debugPrint('Token not found in the response');
+          }
         } else {
-          // Handle missing token error
-          debugPrint('Token not found in the response');
+          // Handle login error
+          debugPrint('Login failed with status code ${response.statusCode}');
         }
-      } else {
-        // Handle login error
-        debugPrint('Login failed with status code ${response.statusCode}');
-      }
-    }).catchError((error) {
-      final Map<String, dynamic> result =
-          extractFromResponse(error.response?.data);
+      }).catchError((error) {
+        final Map<String, dynamic> result =
+            extractFromResponse(error.response?.data);
+        final String errorMessage = result['error'];
+        showErrorDialog(
+          context: context,
+          title: "Login Error",
+          content: errorMessage,
+        );
 
-      final String errorMessage = result['error'];
-      showErrorDialog(
-        context: context,
-        title: "Login Error",
-        content: errorMessage,
-      );
-    }).whenComplete(() {
-      setState(() {
-        isLoading = false;
+        Sentry.captureException(error);
+      }).whenComplete(() {
+        setState(() {
+          isLoading = false;
+        });
       });
-    });
+    } catch (error, stackTrace) {
+      Sentry.captureException(error, stackTrace: stackTrace);
+    }
   }
 
   void _hideKeyboard() {

@@ -3,6 +3,7 @@ import 'package:comminq/utils/constants.dart';
 import 'package:comminq/utils/helpers.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:sentry_flutter/sentry_flutter.dart';
 
 import '../../../utils/dialog_utils.dart';
 import '../../../utils/email_validator.dart';
@@ -93,13 +94,15 @@ class _RegisterViewState extends State<RegisterView> {
     }).catchError((error) {
       final Map<String, dynamic> result =
           extractFromResponse(error.response?.data);
-
       final String errorMessage = result['error'];
       showErrorDialog(
         context: context,
         title: "Registration Error",
         content: errorMessage,
       );
+
+      // Capture the exception with Sentry
+      Sentry.captureException(error);
     }).whenComplete(() {
       setState(() {
         isLoading = false;

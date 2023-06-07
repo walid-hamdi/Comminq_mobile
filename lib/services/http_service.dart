@@ -32,24 +32,19 @@ class HttpService<TProfile, TAuth> {
   }
 
   Future<ResponseProfile> profile() async {
-    final response = await _client.get<Map<String, dynamic>>(
-      '$endpoint/profile',
-    );
+    // try {
+      final response =
+          await _client.get<Map<String, dynamic>>('$endpoint/profile');
 
-    final userProfileData = response.data;
-    final userProfile = ResponseProfile.fromJson(userProfileData!);
+      final userProfileData = response.data;
+      final userProfile = ResponseProfile.fromJson(userProfileData!);
 
-    return userProfile;
-  }
+      return userProfile;
+   }
 
   Future<Response<TAuth>> login(Map<String, dynamic> data) {
-    return _client.post<TAuth>(
-      '$endpoint/login',
-      data: data,
-      // options: Options(
-      //   withCredentials: true,
-      // ),
-    );
+    return _client
+        .post<TAuth>('$endpoint/login', data: data);
   }
 
   Future<Response<TAuth>> googleLogin(String accessToken) {
@@ -57,33 +52,18 @@ class HttpService<TProfile, TAuth> {
       'access_token': accessToken,
     };
 
-    return _client.post<TAuth>(
-      '$endpoint/google-login',
-      data: data,
-      // options: Options(
-      //   withCredentials: true,
-      // ),
-    );
-  }
+    return _client
+        .post<TAuth>('$endpoint/google-login', data: data);
+   }
 
   Future<Response<TAuth>> register(Map<String, dynamic> data) {
-    return _client.post<TAuth>(
-      '$endpoint/register',
-      data: data,
-      // options: Options(
-      //   withCredentials: true,
-      // ),
-    );
-  }
+    return _client
+        .post<TAuth>('$endpoint/register', data: data);
+   }
 
   Future<Response> logout() {
-    return _client.get(
-      '$endpoint/logout',
-      // options: Options(
-      //   withCredentials: true,
-      // ),
-    );
-  }
+    return _client.get('$endpoint/logout');
+   }
 
   // Factory method to create an instance of HttpService
   static HttpService<TProfile, TAuth> create<TProfile, TAuth>(String endpoint) {

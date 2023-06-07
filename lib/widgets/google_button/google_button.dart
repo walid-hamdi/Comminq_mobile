@@ -3,6 +3,7 @@ import 'package:comminq/utils/constants.dart';
 import 'package:comminq/utils/helpers.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:sentry_flutter/sentry_flutter.dart';
 
 import '../../models/environment.dart';
 import '../../utils/secure_storage.dart';
@@ -32,6 +33,7 @@ class _GoogleButtonState extends State<GoogleButton> {
         setState(() {
           isLoading = true;
         });
+
         final TokenManager tokenManager = TokenManager();
 
         userHttpService.googleLogin(googleKey.accessToken!).then(
@@ -80,9 +82,12 @@ class _GoogleButtonState extends State<GoogleButton> {
               );
             },
           );
+
+          // Capture the exception with Sentry
+          Sentry.captureException(error);
         });
       }
-    } catch (error) {
+    } catch (error, stackTrace) {
       debugPrint('Error: $error');
 
       showDialog(
@@ -102,6 +107,9 @@ class _GoogleButtonState extends State<GoogleButton> {
           );
         },
       );
+
+      // Capture the exception with Sentry
+      Sentry.captureException(error, stackTrace: stackTrace);
     }
   }
 
