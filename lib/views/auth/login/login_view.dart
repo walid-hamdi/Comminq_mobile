@@ -1,13 +1,15 @@
 import 'package:comminq/utils/constants.dart';
 import 'package:comminq/utils/helpers.dart';
 import 'package:comminq/utils/secure_storage.dart';
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 
 import '../../../services/user_service.dart';
 import '../../../utils/dialog_utils.dart';
-import '../../../widgets/common/loading_indicator.dart';
+import '../../../widgets/common/auth_button.dart';
+import '../../../widgets/common/auth_link.dart';
+import '../../../widgets/common/custom_text_field.dart';
+import '../../../widgets/common/custom_title_text.dart';
 import '../../../widgets/google_button/google_button.dart';
 
 class LoginFormValues {
@@ -124,21 +126,12 @@ class _LoginViewState extends State<LoginView> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     const SizedBox(height: 100),
-                    const Text(
-                      '🔐 Unlock the Comminq',
-                      textAlign: TextAlign.center,
-                      style:
-                          TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                    ),
+                    const CustomTitleText(text: '🔐 Unlock the Comminq'),
                     const SizedBox(height: 24),
-                    TextFormField(
+                    CustomTextField(
                       controller: _emailController,
+                      labelText: 'Email address',
                       keyboardType: TextInputType.emailAddress,
-                      decoration: const InputDecoration(
-                        labelText: 'Email address',
-                        border: OutlineInputBorder(),
-                        contentPadding: EdgeInsets.all(12.0),
-                      ),
                       validator: (value) {
                         if (value == null || value.isEmpty) {
                           return 'Please enter your email address';
@@ -147,14 +140,10 @@ class _LoginViewState extends State<LoginView> {
                       },
                     ),
                     const SizedBox(height: 16),
-                    TextFormField(
+                    CustomTextField(
                       controller: _passwordController,
+                      labelText: 'Password',
                       obscureText: true,
-                      decoration: const InputDecoration(
-                        labelText: 'Password',
-                        border: OutlineInputBorder(),
-                        contentPadding: EdgeInsets.all(12.0),
-                      ),
                       validator: (value) {
                         if (value == null || value.isEmpty) {
                           return 'Please enter your password';
@@ -163,66 +152,31 @@ class _LoginViewState extends State<LoginView> {
                       },
                     ),
                     const SizedBox(height: 24),
-                    ElevatedButton(
-                      onPressed: _submitForm,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor:
-                            isLoading ? Colors.grey.shade200 : Colors.blue,
-                        padding: const EdgeInsets.all(16.0),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8.0),
-                        ),
-                      ),
-                      child: Stack(
-                        alignment: Alignment.center,
-                        children: [
-                          Visibility(
-                            visible: !isLoading,
-                            child: const Text('Sign in'),
-                          ),
-                          Visibility(
-                            visible: isLoading,
-                            child: const LoadingIndicator(),
-                          ),
-                        ],
-                      ),
+                    AuthButton(
+                      onPressed: isLoading ? null : _submitForm,
+                      isLoading: isLoading,
+                      label: 'Sign in',
                     ),
                     const SizedBox(height: 16),
-                    const GoogleButton(),
+                    !isLoading ? const GoogleButton() : Container(),
                     const SizedBox(height: 16),
                     TextButton(
                       onPressed: () {
                         // Handle forgot password
                       },
-                      child: const Text(
+                      child: Text(
                         'Forgot password?',
-                        style: TextStyle(color: Colors.blue),
+                        style: TextStyle(color: Colors.blue.shade200),
                       ),
                     ),
-                    const SizedBox(height: 24),
-                    Container(
-                      alignment: Alignment.center,
-                      child: RichText(
-                        text: TextSpan(
-                          text: 'New to Comminq? ',
-                          style:
-                              const TextStyle(fontSize: 16, color: Colors.grey),
-                          children: [
-                            TextSpan(
-                              text: 'Join now',
-                              style: const TextStyle(
-                                fontSize: 16,
-                                color: Colors.blue,
-                                decoration: TextDecoration.underline,
-                              ),
-                              recognizer: TapGestureRecognizer()
-                                ..onTap = () {
-                                  navigateToRoute(context, Routes.register);
-                                },
-                            ),
-                          ],
-                        ),
-                      ),
+                    const SizedBox(height: 16),
+                    AuthLink(
+                      isLoading: isLoading,
+                      message: 'New to Comminq? ',
+                      linkText: 'Join now',
+                      onLinkPressed: () {
+                        navigateToRoute(context, Routes.register);
+                      },
                     ),
                   ],
                 ),

@@ -4,6 +4,7 @@ import 'package:comminq/views/startup/splash_screen_view.dart';
 import 'package:flutter/material.dart';
 
 import '../utils/constants.dart';
+import '../views/auth/profile/profile_view.dart';
 import '../views/home/home_view.dart';
 
 class MyApp extends StatelessWidget {
@@ -20,6 +21,8 @@ class MyApp extends StatelessWidget {
         Routes.home: (context) => const HomeView(),
         Routes.login: (context) => const LoginView(),
         Routes.register: (context) => const RegisterView(),
+        Routes.profile: (context) => const ProfileView(),
+
       },
     );
   }
