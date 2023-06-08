@@ -134,7 +134,7 @@ class _RegisterViewState extends State<RegisterView> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const SizedBox(height: 100),
+                  const SizedBox(height: 60),
                   const CustomTitleText(text: '📝 Join the Comminq Community'),
                   const SizedBox(height: 24),
                   CustomTextField(
@@ -146,6 +146,7 @@ class _RegisterViewState extends State<RegisterView> {
                       }
                       return null;
                     },
+                    showSuffixIcon: false,
                   ),
                   const SizedBox(height: 16),
                   CustomTextField(
@@ -160,6 +161,7 @@ class _RegisterViewState extends State<RegisterView> {
                       }
                       return null;
                     },
+                    showSuffixIcon: false,
                   ),
                   const SizedBox(height: 16),
                   CustomTextField(
@@ -196,7 +198,7 @@ class _RegisterViewState extends State<RegisterView> {
                     label: "Sign up",
                   ),
                   const SizedBox(height: 14),
-                  const GoogleButton(),
+                  !isLoading ? const GoogleButton() : Container(),
                   const SizedBox(height: 24),
                   AuthLink(
                     isLoading: isLoading,

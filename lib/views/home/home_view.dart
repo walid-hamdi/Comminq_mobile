@@ -1,12 +1,14 @@
-// import 'package:comminq/services/user_service.dart';
-import 'package:comminq/utils/constants.dart';
-// import 'package:comminq/utils/dialog_utils.dart';
-import 'package:comminq/utils/helpers.dart';
-import 'package:comminq/utils/secure_storage.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 import '../../models/environment.dart';
+import '../../models/user_profile.dart';
+import '../../services/user_service.dart';
+import '../../utils/constants.dart';
+import '../../utils/dialog_utils.dart';
+import '../../utils/helpers.dart';
+import '../../utils/secure_storage.dart';
 
 class HomeView extends StatefulWidget {
   const HomeView({Key? key}) : super(key: key);
@@ -17,98 +19,28 @@ class HomeView extends StatefulWidget {
 
 class _HomeViewState extends State<HomeView> {
   final _secureStorage = TokenManager();
-  // bool isLoading = false;
-  // String? username;
-  // String? email;
-  // String? picture;
+  int _selectedIndex = 0;
+  UserProfile? _userProfile;
+  bool isLoading = false;
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
-  // void _showProfileModal(BuildContext context) {
-  //   setState(() {
-  //     isLoading = true;
-  //   });
-
-  //   userHttpService.profile().then((response) {
-  //     final profile = response;
-  //     final profileUsername = profile.name;
-  //     final profileEmail = profile.email;
-  //     final profilePicture = profile.picture;
-
-  //     debugPrint("profileUsername $profileUsername");
-  //     showDialog(
-  //       context: context,
-  //       builder: (BuildContext context) {
-  //         return AlertDialog(
-  //           title: const Text('Profile'),
-  //           content: isLoading
-  //               ? const SizedBox(
-  //                   width: 48, // Adjust the width as needed
-  //                   height: 48, // Adjust the height as needed
-  //                   child: Center(
-  //                     child: CircularProgressIndicator(),
-  //                   ),
-  //                 )
-  //               : Column(
-  //                   mainAxisSize: MainAxisSize.min,
-  //                   children: [
-  //                     GestureDetector(
-  //                       onTap: () {
-  //                         // Handle avatar click
-  //                         _showEditAvatarModal(context);
-  //                       },
-  //                       child: Stack(
-  //                         alignment: Alignment.bottomRight,
-  //                         children: [
-  //                           CircleAvatar(
-  //                             backgroundImage: NetworkImage(profilePicture),
-  //                             radius: 50,
-  //                           ),
-  //                           const Icon(Icons.edit, size: 20),
-  //                         ],
-  //                       ),
-  //                     ),
-  //                     const SizedBox(height: 16),
-  //                     GestureDetector(
-  //                       onTap: () {
-  //                         // Handle username click
-  //                         _showEditUsernameModal(context);
-  //                       },
-  //                       child: Text('Username: $profileUsername'),
-  //                     ),
-  //                     GestureDetector(
-  //                       onTap: () {
-  //                         // Handle email click
-  //                         _showEditEmailModal(context);
-  //                       },
-  //                       child: Text('Email: $profileEmail'),
-  //                     ),
-  //                     // Text('Followers: ${profile.followersCount}'),
-  //                     // Text('Following: ${profile.followingCount}'),
-  //                   ],
-  //                 ),
-  //           actions: [
-  //             TextButton(
-  //               onPressed: () {
-  //                 Navigator.of(context).pop();
-  //               },
-  //               child: const Text('Close'),
-  //             ),
-  //           ],
-  //         );
-  //       },
-  //     );
-  //   }).catchError((error) {
-  //     final String errorMessage = error.response.toString();
-  //     showErrorDialog(
-  //       context: context,
-  //       title: "Retrieve Profile Error",
-  //       content: errorMessage,
-  //     );
-  //   }).whenComplete(() {
-  //     setState(() {
-  //       isLoading = false;
-  //     });
-  //   });
-  // }
+  static const List<Widget> _widgetOptions = <Widget>[
+    Center(
+      child: Text('Home'),
+    ),
+    Center(
+      child: Text('Network'),
+    ),
+    Center(
+      child: Text('Post'),
+    ),
+    Center(
+      child: Text('Notifications'),
+    ),
+    Center(
+      child: Text('Jobs'),
+    ),
+  ];
 
   void _performLogout(BuildContext context) {
     showDialog(
@@ -154,195 +86,254 @@ class _HomeViewState extends State<HomeView> {
         clientId: Environment.clientId,
       );
       googleSignIn.signOut().then((_) {
-        navigateToRoute(context, Routes.login);
+        return navigateToRoute(context, Routes.login);
       });
+      navigateToRoute(context, Routes.login);
     }).catchError((error) {
       debugPrint('Error deleting token from secure storage: $error');
     });
   }
 
-  // void _showEditAvatarModal(BuildContext context) {
-  //   showDialog(
-  //     context: context,
-  //     builder: (BuildContext context) {
-  //       return AlertDialog(
-  //         title: const Text('Edit Avatar'),
-  //         content: const Column(
-  //           mainAxisSize: MainAxisSize.min,
-  //           children: [
-  //             // Add form field or button to edit avatar
-  //             Text('Edit Avatar'),
-  //             // Add more form fields as needed
-  //           ],
-  //         ),
-  //         actions: [
-  //           TextButton(
-  //             onPressed: () {
-  //               Navigator.of(context).pop();
-  //             },
-  //             child: const Text('Cancel'),
-  //           ),
-  //           TextButton(
-  //             onPressed: () {
-  //               // Perform edit avatar logic
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+  }
 
-  //               // Example:
-  //               // _performEditAvatar(context);
+  void _hideKeyboard() {
+    final currentFocus = FocusScope.of(context);
+    if (!currentFocus.hasPrimaryFocus) {
+      currentFocus.unfocus();
+    }
+  }
 
-  //               // Close the modal
-  //               Navigator.of(context).pop();
-  //             },
-  //             child: const Text('Save'),
-  //           ),
-  //         ],
-  //       );
-  //     },
-  //   );
-  // }
+  void _fetchUserProfile() {
+    setState(() {
+      isLoading = true;
+    });
 
-  // void _showEditUsernameModal(BuildContext context) {
-  //   showDialog(
-  //     context: context,
-  //     builder: (BuildContext context) {
-  //       return AlertDialog(
-  //         title: const Text('Edit Username'),
-  //         content: Column(
-  //           mainAxisSize: MainAxisSize.min,
-  //           children: [
-  //             // Add form field or button to edit username
-  //             TextFormField(
-  //               initialValue: username,
-  //               decoration: const InputDecoration(labelText: 'Username'),
-  //               onChanged: (value) {
-  //                 setState(() {
-  //                   username = value;
-  //                 });
-  //               },
-  //             ),
-  //             // Add more form fields as needed
-  //           ],
-  //         ),
-  //         actions: [
-  //           TextButton(
-  //             onPressed: () {
-  //               Navigator.of(context).pop();
-  //             },
-  //             child: const Text('Cancel'),
-  //           ),
-  //           TextButton(
-  //             onPressed: () {
-  //               // Perform edit username logic
+    userHttpService.profile().then((response) {
+      final profile = response;
+      final profileUsername = profile.name;
+      final profileEmail = profile.email;
+      final profilePicture = profile.picture;
 
-  //               // Example:
-  //               // _performEditUsername(context);
+      final userProfile = UserProfile(
+        username: profileUsername,
+        email: profileEmail,
+        picture: profilePicture,
+      );
 
-  //               // Close the modal
-  //               Navigator.of(context).pop();
-  //             },
-  //             child: const Text('Save'),
-  //           ),
-  //         ],
-  //       );
-  //     },
-  //   );
-  // }
+      print("UserProfile ${userProfile.email}");
 
-  // void _showEditEmailModal(BuildContext context) {
-  //   showDialog(
-  //     context: context,
-  //     builder: (BuildContext context) {
-  //       return AlertDialog(
-  //         title: const Text('Edit Email'),
-  //         content: Column(
-  //           mainAxisSize: MainAxisSize.min,
-  //           children: [
-  //             // Add form field or button to edit email
-  //             TextFormField(
-  //               initialValue: email,
-  //               decoration: const InputDecoration(labelText: 'Email'),
-  //               onChanged: (value) {
-  //                 setState(() {
-  //                   email = value;
-  //                 });
-  //               },
-  //             ),
-  //             // Add more form fields as needed
-  //           ],
-  //         ),
-  //         actions: [
-  //           TextButton(
-  //             onPressed: () {
-  //               Navigator.of(context).pop();
-  //             },
-  //             child: const Text('Cancel'),
-  //           ),
-  //           TextButton(
-  //             onPressed: () {
-  //               // Perform edit email logic
+      setState(() {
+        _userProfile = userProfile;
+      });
+    }).catchError((error) {
+      final String errorMessage = error.response.toString();
+      showErrorDialog(
+        context: context,
+        title: "Retrieve Profile Error",
+        content: errorMessage,
+      );
+    }).whenComplete(() {
+      setState(() {
+        isLoading = false;
+      });
+    });
+  }
 
-  //               // Example:
-  //               // _performEditEmail(context);
-
-  //               // Close the modal
-  //               Navigator.of(context).pop();
-  //             },
-  //             child: const Text('Save'),
-  //           ),
-  //         ],
-  //       );
-  //     },
-  //   );
-  // }
+  @override
+  void initState() {
+    super.initState();
+    _fetchUserProfile();
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Home'),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 8.0),
-            child: PopupMenuButton<String>(
-              icon: const Icon(
-                Icons.settings,
-                size: 24,
+    if (isLoading) {
+      return const Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
+    return GestureDetector(
+      onTap: _hideKeyboard,
+      child: Scaffold(
+        key: _scaffoldKey,
+        appBar: AppBar(
+          leading: InkWell(
+            onTap: () {
+              _scaffoldKey.currentState!.openDrawer();
+            },
+            child: Container(
+              decoration: const BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white,
               ),
-              onSelected: (value) {
-                if (value == 'profile') {
-                  // _showProfileModal(context);
-                  pushToRoute(context, Routes.profile);
-                } else if (value == 'logout') {
-                  _performLogout(context);
-                }
-              },
-              itemBuilder: (BuildContext context) => [
-                const PopupMenuItem(
-                  value: 'profile',
-                  child: ListTile(
-                    leading: Icon(
-                      Icons.person,
-                      size: 20,
+              padding: const EdgeInsets.all(14),
+              child: const Image(
+                image: AssetImage('assets/icons/place_holder_avatar.png'),
+                fit: BoxFit.cover,
+              ),
+            ),
+          ),
+          backgroundColor: Colors.white,
+          foregroundColor: Colors.grey,
+          elevation: 0,
+          systemOverlayStyle: const SystemUiOverlayStyle(
+            statusBarColor: Colors.white,
+            statusBarIconBrightness: Brightness.dark,
+            statusBarBrightness: Brightness.light,
+          ),
+          titleSpacing: 0,
+          title: Padding(
+            padding: const EdgeInsets.all(10),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Expanded(
+                  child: Container(
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[200],
+                      borderRadius: BorderRadius.circular(5),
                     ),
-                    title: Text('Profile'),
+                    child: const TextField(
+                      textAlignVertical: TextAlignVertical.center,
+                      decoration: InputDecoration(
+                        hintText: 'Search',
+                        contentPadding: EdgeInsets.only(
+                          left: 16,
+                          bottom: 13,
+                        ),
+                        border: InputBorder.none,
+                      ),
+                    ),
                   ),
                 ),
-                const PopupMenuItem(
-                  value: 'logout',
-                  child: ListTile(
-                    leading: Icon(
-                      Icons.logout,
-                      size: 20,
-                    ),
-                    title: Text('Logout'),
-                  ),
+                const SizedBox(width: 8),
+                IconButton(
+                  icon: const Icon(Icons.messenger),
+                  onPressed: () {
+                    // Open the messenger
+                  },
                 ),
               ],
             ),
           ),
-        ],
-      ),
-      body: const Center(
-        child: Text("Comminq"),
+        ),
+        drawer: Container(
+          width: MediaQuery.of(context).size.width * 0.8,
+          decoration: BoxDecoration(
+            color: Colors.black.withOpacity(0.8),
+            borderRadius: const BorderRadius.only(
+              topRight: Radius.circular(20),
+              bottomRight: Radius.circular(20),
+            ),
+          ),
+          child: Drawer(
+            child: ListView(
+              padding: EdgeInsets.zero,
+              children: [
+                UserAccountsDrawerHeader(
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.7),
+                  ),
+                  accountName: Row(
+                    children: [
+                      const Icon(
+                        Icons.person,
+                        color: Colors.white,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        capitalizeFirstLetter(
+                          _userProfile?.username ?? '',
+                        ),
+                      ),
+                    ],
+                  ),
+                  accountEmail: Row(
+                    children: [
+                      const Icon(
+                        Icons.email,
+                        color: Colors.white,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(_userProfile?.email ?? ''),
+                    ],
+                  ),
+                  currentAccountPicture: GestureDetector(
+                    onTap: () {
+                      // Open user profile
+                    },
+                    child: InkWell(
+                      onTap: () {},
+                      child: Container(
+                        decoration: const BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.white,
+                        ),
+                        padding: const EdgeInsets.all(14),
+                        margin: const EdgeInsets.symmetric(vertical: 5),
+                        child: const Image(
+                          image: AssetImage(
+                              'assets/icons/place_holder_avatar.png'),
+                          fit: BoxFit.contain,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                ListTile(
+                  leading: const Icon(Icons.settings),
+                  title: const Text('Settings'),
+                  onTap: () {
+                    // Open settings
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.logout),
+                  title: const Text('Logout'),
+                  onTap: () {
+                    _performLogout(context);
+                  },
+                ),
+              ],
+            ),
+          ),
+        ),
+        body: _widgetOptions.elementAt(_selectedIndex),
+        bottomNavigationBar: BottomNavigationBar(
+          type: BottomNavigationBarType.fixed,
+          currentIndex: _selectedIndex,
+          onTap: _onItemTapped,
+          items: const <BottomNavigationBarItem>[
+            BottomNavigationBarItem(
+              icon: Icon(Icons.home),
+              label: 'Home',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.people),
+              label: 'Network',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.add_box),
+              label: 'Post',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.notifications),
+              label: 'Notifications',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.work),
+              label: 'Jobs',
+            ),
+          ],
+        ),
       ),
     );
   }

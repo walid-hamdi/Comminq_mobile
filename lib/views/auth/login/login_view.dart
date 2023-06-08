@@ -1,9 +1,10 @@
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:sentry_flutter/sentry_flutter.dart';
+
 import 'package:comminq/utils/constants.dart';
 import 'package:comminq/utils/helpers.dart';
 import 'package:comminq/utils/secure_storage.dart';
-import 'package:flutter/material.dart';
-import 'package:sentry_flutter/sentry_flutter.dart';
-
 import '../../../services/user_service.dart';
 import '../../../utils/dialog_utils.dart';
 import '../../../widgets/common/auth_button.dart';
@@ -35,6 +36,7 @@ class _LoginViewState extends State<LoginView> {
   final TextEditingController _passwordController = TextEditingController();
 
   bool isLoading = false;
+  final TokenManager tokenManager = TokenManager();
 
   void _submitForm() {
     if (_formKey.currentState!.validate()) {
@@ -57,8 +59,6 @@ class _LoginViewState extends State<LoginView> {
     setState(() {
       isLoading = true;
     });
-
-    final TokenManager tokenManager = TokenManager();
 
     try {
       userHttpService.login(data).then((response) {
@@ -111,6 +111,12 @@ class _LoginViewState extends State<LoginView> {
 
   @override
   Widget build(BuildContext context) {
+    SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
+      statusBarColor: Colors.white,
+      statusBarIconBrightness: Brightness.dark, // For Android (dark icons)
+      statusBarBrightness: Brightness.light, // For iOS (dark icons)
+    ));
+
     return GestureDetector(
       onTap: _hideKeyboard,
       child: Scaffold(
@@ -125,7 +131,7 @@ class _LoginViewState extends State<LoginView> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    const SizedBox(height: 100),
+                    const SizedBox(height: 60),
                     const CustomTitleText(text: '🔐 Unlock the Comminq'),
                     const SizedBox(height: 24),
                     CustomTextField(
@@ -138,6 +144,7 @@ class _LoginViewState extends State<LoginView> {
                         }
                         return null;
                       },
+                      showSuffixIcon: false,
                     ),
                     const SizedBox(height: 16),
                     CustomTextField(
