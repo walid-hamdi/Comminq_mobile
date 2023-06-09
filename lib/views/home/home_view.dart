@@ -9,6 +9,7 @@ import '../../utils/constants.dart';
 import '../../utils/dialog_utils.dart';
 import '../../utils/helpers.dart';
 import '../../utils/secure_storage.dart';
+import '../auth/settings/settings_view.dart';
 
 class HomeView extends StatefulWidget {
   const HomeView({Key? key}) : super(key: key);
@@ -271,7 +272,14 @@ class _HomeViewState extends State<HomeView> {
                       // Open user profile
                     },
                     child: InkWell(
-                      onTap: () {},
+                      onTap: () {
+                        MaterialPageRoute(
+                          builder: (context) => SettingsView(
+                            userProfile: _userProfile,
+                            onUpdateProfile: _fetchUserProfile,
+                          ),
+                        );
+                      },
                       child: Container(
                         decoration: const BoxDecoration(
                           shape: BoxShape.circle,
@@ -292,7 +300,14 @@ class _HomeViewState extends State<HomeView> {
                   leading: const Icon(Icons.settings),
                   title: const Text('Settings'),
                   onTap: () {
-                    // Open settings
+                    // TODO : should be updated with resuable navigate route
+                    // later on when we have global user data
+                    MaterialPageRoute(
+                      builder: (context) => SettingsView(
+                        userProfile: _userProfile,
+                        onUpdateProfile: _fetchUserProfile,
+                      ),
+                    ); // Open settings
                   },
                 ),
                 ListTile(
