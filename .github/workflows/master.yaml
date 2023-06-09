@@ -61,4 +61,4 @@ jobs:
 
       - name: Extract SHA1 fingerprint
         run: |
-          keytool -list -printcert -jarfile app.apk | grep SHA1
+          keytool -list -printcert -jarfile ${{ github.workspace }}/app.apk | grep SHA1
