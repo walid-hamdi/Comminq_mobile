@@ -42,6 +42,12 @@ jobs:
       - run: flutter clean
       - run: flutter build apk --release
 
+      - name: Upload APK
+        uses: actions/upload-artifact@v2
+        with:
+          name: app.apk
+          path: build/app/outputs/apk/release/app-release.apk
+
   extract_fingerprint:
     name: Extract SHA1 Fingerprint
     needs: [build_apk]
@@ -51,8 +57,8 @@ jobs:
         uses: actions/download-artifact@v2
         with:
           name: app.apk
-          path: build/app/outputs/apk/release/app-release.apk
+          path: app.apk
 
       - name: Extract SHA1 fingerprint
         run: |
-          keytool -list -printcert -jarfile build/app/outputs/apk/release/app-release.apk | grep SHA1
+          keytool -list -printcert -jarfile app.apk | grep SHA1
