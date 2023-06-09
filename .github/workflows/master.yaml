@@ -42,23 +42,16 @@ jobs:
       - run: flutter clean
       - run: flutter build apk --release
 
+      - name: Generate Signing Report
+        run: ./gradlew signingReport
+
+      - name: Log Fingerprint
+        run: |
+          echo "Debug Fingerprint:"
+          grep "SHA1: " app/build/outputs/apk/release/signing-report.txt
+
       - name: Upload APK
         uses: actions/upload-artifact@v2
         with:
           name: app.apk
           path: build/app/outputs/apk/release/app-release.apk
-
-  extract_fingerprint:
-    name: Extract SHA1 Fingerprint
-    needs: [build_apk]
-    runs-on: ubuntu-latest
-    steps:
-      - name: Download APK artifact
-        uses: actions/download-artifact@v2
-        with:
-          name: app.apk
-          path: app.apk
-
-      - name: Extract SHA1 fingerprint
-        run: |
-          keytool -list -printcert -jarfile ${{ github.workspace }}/app.apk | grep SHA1
