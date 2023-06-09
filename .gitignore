@@ -48,6 +48,6 @@ app.*.map.json
 /android/app/release
 
 # Hide environment files
-.env.*
+# .env.*
 android/app/production.keystore
 
