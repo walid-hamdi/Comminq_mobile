@@ -49,3 +49,5 @@ app.*.map.json
 
 # Hide environment files
 .env.*
+android/app/production.keystore
+
