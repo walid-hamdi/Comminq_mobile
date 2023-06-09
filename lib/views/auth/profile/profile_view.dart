@@ -34,7 +34,7 @@ class _ProfileViewState extends State<ProfileView> {
         _profilePicture = response.picture;
         _isLoading = false;
       });
-      print("Password: $_profilePassword");
+      debugPrint("Password: $_profilePassword");
     } catch (error) {
       final String errorMessage = error.toString();
       showErrorDialog(

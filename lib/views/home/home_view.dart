@@ -124,7 +124,7 @@ class _HomeViewState extends State<HomeView> {
         picture: profilePicture,
       );
 
-      print("UserProfile ${userProfile.email}");
+      debugPrint("UserProfile ${userProfile.email}");
 
       setState(() {
         _userProfile = userProfile;
