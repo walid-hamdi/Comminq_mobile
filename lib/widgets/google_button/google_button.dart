@@ -123,7 +123,7 @@ class _GoogleButtonState extends State<GoogleButton> {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(8.0),
         ),
-        padding: const EdgeInsets.all(12.0),
+        padding: const EdgeInsets.all(10.0),
       ),
       child: Stack(
         alignment: Alignment.center,

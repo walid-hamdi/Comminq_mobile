@@ -7,6 +7,7 @@ import 'models/environment.dart';
 
 Future<void> main() async {
   await dotenv.load(fileName: Environment.filename);
+  // WidgetsFlutterBinding.ensureInitialized();
   await SentryFlutter.init(
     (options) {
       options.dsn = Environment.sentryDsn;
@@ -17,9 +18,5 @@ Future<void> main() async {
   );
 }
 
-// TODO:
-// hide env variables
-// handle sentry
+// flutter run -d chrome --web-port=50951
 
-
-// flutter run --web-port=50951

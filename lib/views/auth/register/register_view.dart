@@ -1,14 +1,16 @@
 import 'package:comminq/services/user_service.dart';
 import 'package:comminq/utils/constants.dart';
 import 'package:comminq/utils/helpers.dart';
-import 'package:flutter/gestures.dart';
+import 'package:comminq/widgets/common/auth_link.dart';
 import 'package:flutter/material.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 
 import '../../../utils/dialog_utils.dart';
 import '../../../utils/email_validator.dart';
 import '../../../utils/secure_storage.dart';
-import '../../../widgets/common/loading_indicator.dart';
+import '../../../widgets/common/auth_button.dart';
+import '../../../widgets/common/custom_text_field.dart';
+import '../../../widgets/common/custom_title_text.dart';
 import '../../../widgets/google_button/google_button.dart';
 
 class RegisterFormValues {
@@ -132,36 +134,25 @@ class _RegisterViewState extends State<RegisterView> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const SizedBox(height: 100),
-                  const Text(
-                    '📝 Join the Comminq Community',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                  ),
+                  const SizedBox(height: 60),
+                  const CustomTitleText(text: '📝 Join the Comminq Community'),
                   const SizedBox(height: 24),
-                  TextFormField(
+                  CustomTextField(
                     controller: _nameController,
-                    decoration: const InputDecoration(
-                      labelText: 'Name',
-                      border: OutlineInputBorder(),
-                      contentPadding: EdgeInsets.all(12.0),
-                    ),
+                    labelText: 'Name',
                     validator: (value) {
                       if (value == null || value.isEmpty) {
                         return 'Please enter your name';
                       }
                       return null;
                     },
+                    showSuffixIcon: false,
                   ),
                   const SizedBox(height: 16),
-                  TextFormField(
+                  CustomTextField(
                     controller: _emailController,
+                    labelText: 'Email Address',
                     keyboardType: TextInputType.emailAddress,
-                    decoration: const InputDecoration(
-                      labelText: 'Email Address',
-                      border: OutlineInputBorder(),
-                      contentPadding: EdgeInsets.all(12.0),
-                    ),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
                         return 'Please enter your email address';
@@ -170,16 +161,13 @@ class _RegisterViewState extends State<RegisterView> {
                       }
                       return null;
                     },
+                    showSuffixIcon: false,
                   ),
                   const SizedBox(height: 16),
-                  TextFormField(
+                  CustomTextField(
                     controller: _passwordController,
+                    labelText: 'Password',
                     obscureText: true,
-                    decoration: const InputDecoration(
-                      labelText: 'Password',
-                      border: OutlineInputBorder(),
-                      contentPadding: EdgeInsets.all(12.0),
-                    ),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
                         return 'Please enter your password';
@@ -190,14 +178,10 @@ class _RegisterViewState extends State<RegisterView> {
                     },
                   ),
                   const SizedBox(height: 16),
-                  TextFormField(
+                  CustomTextField(
                     controller: _confirmPasswordController,
+                    labelText: 'Password Confirm',
                     obscureText: true,
-                    decoration: const InputDecoration(
-                      labelText: 'Password',
-                      border: OutlineInputBorder(),
-                      contentPadding: EdgeInsets.all(12.0),
-                    ),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
                         return 'Please confirm your password';
@@ -208,57 +192,21 @@ class _RegisterViewState extends State<RegisterView> {
                     },
                   ),
                   const SizedBox(height: 24),
-                  ElevatedButton(
-                    onPressed: _submitForm,
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.all(16.0),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8.0),
-                      ),
-                      backgroundColor:
-                          isLoading ? Colors.grey.shade200 : Colors.blue,
-                      textStyle: const TextStyle(fontSize: 16),
-                    ),
-                    child: Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        Visibility(
-                          visible: !isLoading,
-                          child: const Text('Sign up'),
-                        ),
-                        Visibility(
-                          visible: isLoading,
-                          child: const LoadingIndicator(),
-                        ),
-                      ],
-                    ),
+                  AuthButton(
+                    onPressed: isLoading ? null : _submitForm,
+                    isLoading: isLoading,
+                    label: "Sign up",
                   ),
-                  const SizedBox(height: 16),
-                  const GoogleButton(),
+                  const SizedBox(height: 14),
+                  !isLoading ? const GoogleButton() : Container(),
                   const SizedBox(height: 24),
-                  Container(
-                    alignment: Alignment.center,
-                    child: RichText(
-                      text: TextSpan(
-                        text: 'Already have an account? ',
-                        style:
-                            const TextStyle(fontSize: 16, color: Colors.grey),
-                        children: [
-                          TextSpan(
-                            text: 'Sign in',
-                            style: const TextStyle(
-                              fontSize: 16,
-                              color: Colors.blue,
-                              decoration: TextDecoration.underline,
-                            ),
-                            recognizer: TapGestureRecognizer()
-                              ..onTap = () {
-                                navigateToRoute(context, Routes.login);
-                              },
-                          ),
-                        ],
-                      ),
-                    ),
+                  AuthLink(
+                    isLoading: isLoading,
+                    message: 'Already have an account? ',
+                    linkText: 'Sign in',
+                    onLinkPressed: () {
+                      navigateToRoute(context, Routes.login);
+                    },
                   ),
                 ],
               ),

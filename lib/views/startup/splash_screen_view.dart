@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:comminq/utils/constants.dart';
 import 'package:comminq/utils/secure_storage.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../utils/helpers.dart';
 
@@ -18,6 +19,7 @@ class _SplashScreenViewState extends State<SplashScreenView> {
   @override
   void initState() {
     super.initState();
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual, overlays: []);
     Timer(const Duration(seconds: 2), () async {
       // Home or login
       tokenManager.getToken().then((token) {
@@ -28,6 +30,13 @@ class _SplashScreenViewState extends State<SplashScreenView> {
         }
       });
     });
+  }
+
+  @override
+  void dispose() {
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual,
+        overlays: SystemUiOverlay.values);
+    super.dispose();
   }
 
   @override
