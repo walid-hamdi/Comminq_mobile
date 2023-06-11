@@ -56,6 +56,8 @@ class HttpService<TProfile, TAuth> {
       'access_token': accessToken,
     };
 
+    debugPrint("EndPoint $endpoint");
+
     return _client.post<TAuth>('$endpoint/google-login', data: data);
   }
 
