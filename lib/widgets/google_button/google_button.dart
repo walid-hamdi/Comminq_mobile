@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 
-import '../../models/environment.dart';
+import '../../environment.dart';
 import '../../utils/secure_storage.dart';
 import '../common/loading_indicator.dart';
 

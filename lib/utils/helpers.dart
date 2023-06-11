@@ -6,8 +6,8 @@ void navigateToRoute(BuildContext context, String routeName) {
   Navigator.of(context).pushReplacementNamed(routeName);
 }
 
-void pushToRoute(BuildContext context, String routeName) {
-  Navigator.of(context).pushNamed(routeName);
+void pushToRoute(BuildContext context, String routeName, {Object? arguments}) {
+  Navigator.of(context).pushNamed(routeName, arguments: arguments);
 }
 
 Map<String, dynamic> extractFromResponse(dynamic responseData) {

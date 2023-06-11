@@ -2,14 +2,12 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
 class AuthLink extends StatelessWidget {
-  final bool isLoading;
   final String message;
   final String linkText;
   final VoidCallback onLinkPressed;
 
   const AuthLink({
     Key? key,
-    required this.isLoading,
     required this.message,
     required this.linkText,
     required this.onLinkPressed,
@@ -30,8 +28,7 @@ class AuthLink extends StatelessWidget {
                 fontSize: 16,
                 color: Colors.blue,
               ),
-              recognizer: TapGestureRecognizer()
-                ..onTap = isLoading ? null : onLinkPressed,
+              recognizer: TapGestureRecognizer()..onTap = onLinkPressed,
             ),
           ],
         ),

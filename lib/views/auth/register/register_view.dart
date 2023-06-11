@@ -2,6 +2,7 @@ import 'package:comminq/services/user_service.dart';
 import 'package:comminq/utils/constants.dart';
 import 'package:comminq/utils/helpers.dart';
 import 'package:comminq/widgets/common/auth_link.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 
@@ -44,6 +45,9 @@ class _RegisterViewState extends State<RegisterView> {
 
   bool isLoading = false;
 
+
+
+
   void _submitForm() {
     if (_formKey.currentState!.validate()) {
       // Perform registration logic
@@ -63,12 +67,31 @@ class _RegisterViewState extends State<RegisterView> {
     }
   }
 
-  void _registerUser(RegisterFormValues formValues) {
+  Future<bool> _checkInternetConnectivity() async {
+    final connectivityResult = await Connectivity().checkConnectivity();
+    return connectivityResult != ConnectivityResult.none;
+  }
+
+
+  void _registerUser(RegisterFormValues formValues)async {
     final data = {
       'name': formValues.name,
       'email': formValues.email,
       'password': formValues.password,
     };
+
+      final isConnected = await _checkInternetConnectivity();
+    if (!isConnected) {
+      if (mounted) {
+        showErrorDialog(
+          context: context,
+          title: "No Internet Connection",
+          content: "Please check your internet connection and try again.",
+        );
+      }
+      return;
+    }
+
     setState(() {
       isLoading = true;
     });
@@ -200,14 +223,13 @@ class _RegisterViewState extends State<RegisterView> {
                   const SizedBox(height: 14),
                   !isLoading ? const GoogleButton() : Container(),
                   const SizedBox(height: 24),
-                  AuthLink(
-                    isLoading: isLoading,
+                  !isLoading ?  AuthLink(
                     message: 'Already have an account? ',
                     linkText: 'Sign in',
                     onLinkPressed: () {
                       navigateToRoute(context, Routes.login);
                     },
-                  ),
+                  ):Container(),
                 ],
               ),
             ),

@@ -42,6 +42,11 @@ class HttpService<TProfile, TAuth> {
     return userProfile;
   }
 
+  Future<Response<TProfile>> updateProfile(
+      String? id, Map<String, dynamic> data) {
+    return _client.patch<TProfile>('$endpoint/$id', data: data);
+  }
+
   Future<Response<TAuth>> login(Map<String, dynamic> data) {
     return _client.post<TAuth>('$endpoint/login', data: data);
   }
