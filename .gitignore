@@ -18,7 +18,6 @@ migrate_working_dir/
 
 
 
-send_email.py
 
 # The .vscode folder contains launch configuration and tasks you configure in
 # VS Code which you may wish to be included in version control, so this line
@@ -51,7 +50,6 @@ app.*.map.json
 # .env.*
 android/app/production.keystore
 
-lib/environment.dart
-
+info.text
 
 # .vscode

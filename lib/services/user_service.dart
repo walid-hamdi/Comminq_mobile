@@ -1,19 +1,18 @@
-import 'package:comminq/environment.dart';
-
+import '../environment.dart';
 import "./http_service.dart";
 
 class ResponseProfile {
   final String id;
   final String name;
   final String email;
-  final String? password;
+  final String password;
   final String picture;
 
   ResponseProfile({
     required this.id,
     required this.name,
     required this.email,
-    this.password,
+    required this.password,
     required this.picture,
   });
 
@@ -29,6 +28,5 @@ class ResponseProfile {
 }
 
 const String endpoint = Environment.endPoint;
-
 final userHttpService =
     HttpService.create<ResponseProfile, String>("${endpoint}api/user");
