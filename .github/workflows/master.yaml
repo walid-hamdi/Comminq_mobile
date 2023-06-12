@@ -12,7 +12,7 @@ env:
 
 jobs:
   flutter_test:
-    name: Run Flutter test and analyze
+    name: Run flutter test and analyze
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -42,16 +42,23 @@ jobs:
       - run: flutter clean
       - run: flutter build apk --release
 
-      - name: Copy APK to artifacts directory
-        run: cp build/app/outputs/apk/release/app-release.apk ${{ github.workspace }}/artifacts/
-
-      - name: Log Fingerprint
-        run: |
-          echo "Debug Fingerprint:"
-          keytool -list -printcert -jarfile ${{ github.workspace }}/artifacts/app-release.apk | grep SHA1
-
       - name: Upload APK
         uses: actions/upload-artifact@v2
         with:
           name: app.apk
-          path: artifacts/app-release.apk
+          path: build/app/outputs/apk/release/app-release.apk
+
+  # extract_sha1:
+  #   name: Extract SHA1 Fingerprint
+  #   needs: [build_apk]
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Download APK artifact
+  #       uses: actions/download-artifact@v2
+  #       with:
+  #         name: app.apk
+  #         path: ${{ github.workspace }}/app.apk
+
+  #     - name: Extract SHA1 fingerprint
+  #       run: |
+  #         keytool -list -printcert -jarfile ${{ github.workspace }}/app.apk | grep SHA1 > sha1.txt
