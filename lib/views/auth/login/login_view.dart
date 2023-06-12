@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 
 import 'package:comminq/utils/constants.dart';
 import 'package:comminq/utils/helpers.dart';
@@ -50,55 +51,57 @@ class _LoginViewState extends State<LoginView> {
     }
   }
 
-  void _loginUser(LoginFormValues formValues) {
-    final data = {
-      'email': formValues.email,
-      'password': formValues.password,
-    };
+  Future<bool> _checkInternetConnectivity() async {
+    final connectivityResult = await Connectivity().checkConnectivity();
+    return connectivityResult != ConnectivityResult.none;
+  }
 
-    setState(() {
-      isLoading = true;
-    });
-
-    try {
-      userHttpService.login(data).then((response) {
-        if (response.statusCode == 200) {
-          final Map<String, dynamic> result =
-              extractFromResponse(response.data);
-          final String token = result['token'];
-
-          if (token.isNotEmpty) {
-            tokenManager.saveToken(token).then((_) {
-              navigateToRoute(context, Routes.home);
-            }).catchError((error) {
-              debugPrint('Error writing token to secure storage: $error');
-            });
-          } else {
-            // Handle missing token error
-            debugPrint('Token not found in the response');
-          }
-        } else {
-          // Handle login error
-          debugPrint('Login failed with status code ${response.statusCode}');
-        }
-      }).catchError((error) {
-        final Map<String, dynamic> result =
-            extractFromResponse(error.response?.data);
-        final String errorMessage = result['error'];
+  void _loginUser(LoginFormValues formValues) async {
+    final isConnected = await _checkInternetConnectivity();
+    if (!isConnected) {
+      if (mounted) {
         showErrorDialog(
           context: context,
-          title: "Login Error",
-          content: errorMessage,
+          title: "No Internet Connection",
+          content: "Please check your internet connection and try again.",
         );
+      }
+      return;
+    }
 
-        Sentry.captureException(error);
-      }).whenComplete(() {
-        setState(() {
-          isLoading = false;
-        });
+    try {
+      final data = {
+        'email': formValues.email,
+        'password': formValues.password,
+      };
+
+      setState(() {
+        isLoading = true;
       });
+
+      final response = await userHttpService.login(data);
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> result = extractFromResponse(response.data);
+        final String token = result['token'];
+
+        if (token.isNotEmpty) {
+          await tokenManager.saveToken(token);
+          if (mounted) {
+            navigateToRoute(context, Routes.home);
+          }
+        } else {
+          debugPrint('Token not found in the response');
+        }
+      } else {
+        debugPrint('Login failed with status code ${response.statusCode}');
+      }
     } catch (error, stackTrace) {
       Sentry.captureException(error, stackTrace: stackTrace);
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
     }
   }
 
@@ -167,24 +170,27 @@ class _LoginViewState extends State<LoginView> {
                     const SizedBox(height: 16),
                     !isLoading ? const GoogleButton() : Container(),
                     const SizedBox(height: 16),
-                    TextButton(
-                      onPressed: () {
-                        // Handle forgot password
-                      },
-                      child: Text(
-                        'Forgot password?',
-                        style: TextStyle(color: Colors.blue.shade200),
-                      ),
-                    ),
+                    !isLoading
+                        ? TextButton(
+                            onPressed: () {
+                              // Handle forgot password
+                            },
+                            child: Text(
+                              'Forgot password?',
+                              style: TextStyle(color: Colors.blue.shade200),
+                            ),
+                          )
+                        : Container(),
                     const SizedBox(height: 16),
-                    AuthLink(
-                      isLoading: isLoading,
-                      message: 'New to Comminq? ',
-                      linkText: 'Join now',
-                      onLinkPressed: () {
-                        navigateToRoute(context, Routes.register);
-                      },
-                    ),
+                    !isLoading
+                        ? AuthLink(
+                            message: 'New to Comminq? ',
+                            linkText: 'Join now',
+                            onLinkPressed: () {
+                              navigateToRoute(context, Routes.register);
+                            },
+                          )
+                        : Container(),
                   ],
                 ),
               ),

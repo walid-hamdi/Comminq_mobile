@@ -1,11 +1,13 @@
 import 'package:comminq/services/user_service.dart';
 import 'package:comminq/utils/constants.dart';
 import 'package:comminq/utils/helpers.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 
-import '../../models/environment.dart';
+import '../../environment.dart';
+import '../../utils/dialog_utils.dart';
 import '../../utils/secure_storage.dart';
 import '../common/loading_indicator.dart';
 
@@ -19,7 +21,24 @@ class GoogleButton extends StatefulWidget {
 class _GoogleButtonState extends State<GoogleButton> {
   bool isLoading = false;
 
+  Future<bool> _checkInternetConnectivity() async {
+    final connectivityResult = await Connectivity().checkConnectivity();
+    return connectivityResult != ConnectivityResult.none;
+  }
+
   void _handleButtonPress() async {
+    final isConnected = await _checkInternetConnectivity();
+    if (!isConnected) {
+      if (mounted) {
+        showErrorDialog(
+          context: context,
+          title: "No Internet Connection",
+          content: "Please check your internet connection and try again.",
+        );
+      }
+      return;
+    }
+
     try {
       final googleSignIn = GoogleSignIn(
         clientId: Environment.clientId,
@@ -36,78 +55,82 @@ class _GoogleButtonState extends State<GoogleButton> {
 
         final TokenManager tokenManager = TokenManager();
 
-        userHttpService.googleLogin(googleKey.accessToken!).then(
-          (response) {
-            if (response.statusCode == 200) {
-              final Map<String, dynamic> result =
-                  extractFromResponse(response.data);
-              final String token = result['token'];
+        try {
+          final response =
+              await userHttpService.googleLogin(googleKey.accessToken!);
 
-              if (token.isNotEmpty) {
-                tokenManager.saveToken(token).then((_) {
+          if (response.statusCode == 200) {
+            final Map<String, dynamic> result =
+                extractFromResponse(response.data);
+            final String token = result['token'];
+
+            if (token.isNotEmpty) {
+              try {
+                await tokenManager.saveToken(token);
+                if (mounted) {
                   navigateToRoute(context, Routes.home);
-                }).catchError((error) {
-                  debugPrint('Error writing token to secure storage: $error');
-                });
-              } else {
-                // Handle missing token error
-                debugPrint('Token not found in the response');
+                }
+              } catch (error) {
+                debugPrint('Error writing token to secure storage: $error');
               }
             } else {
-              debugPrint(
-                  'Login with Google failed with status code ${response.statusCode}');
+              // Handle missing token error
+              debugPrint('Token not found in the response');
             }
-          },
-        ).whenComplete(() {
+          } else {
+            debugPrint(
+                'Login with Google failed with status code ${response.statusCode}');
+          }
+        } catch (error) {
+          final errorMessage = error.toString();
+          if (mounted) {
+            showDialog(
+              context: context,
+              builder: (BuildContext context) {
+                return AlertDialog(
+                  title: const Text('Login Error'),
+                  content: Text(errorMessage),
+                  actions: [
+                    TextButton(
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                      },
+                      child: const Text('OK'),
+                    ),
+                  ],
+                );
+              },
+            );
+          }
+          // Capture the exception with Sentry
+          Sentry.captureException(error);
+        } finally {
           setState(() {
             isLoading = false;
           });
-        }).catchError((error) {
-          final errorMessage = error.response.toString();
-
-          showDialog(
-            context: context,
-            builder: (BuildContext context) {
-              return AlertDialog(
-                title: const Text('Login Error'),
-                content: Text(errorMessage),
-                actions: [
-                  TextButton(
-                    onPressed: () {
-                      Navigator.of(context).pop();
-                    },
-                    child: const Text('OK'),
-                  ),
-                ],
-              );
-            },
-          );
-
-          // Capture the exception with Sentry
-          Sentry.captureException(error);
-        });
+        }
       }
     } catch (error, stackTrace) {
       debugPrint('Error: $error');
-
-      showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            title: const Text('Login with Google Error'),
-            content: Text(error.toString()),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.of(context).pop();
-                },
-                child: const Text('OK'),
-              ),
-            ],
-          );
-        },
-      );
-
+      if (mounted) {
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: const Text('Login with Google Error'),
+              content: Text(error.toString()),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                  child: const Text('OK'),
+                ),
+              ],
+            );
+          },
+        );
+      }
       // Capture the exception with Sentry
       Sentry.captureException(error, stackTrace: stackTrace);
     }
