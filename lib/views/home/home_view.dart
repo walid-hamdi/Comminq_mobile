@@ -171,16 +171,21 @@ class _HomeViewState extends State<HomeView> {
               _scaffoldKey.currentState!.openDrawer();
             },
             child: Container(
-              margin: const EdgeInsets.only(left: 5),
+              // margin: const EdgeInsets.only(left: 5),
+              width: 20,
+              height: 20,
               decoration: const BoxDecoration(
                 shape: BoxShape.circle,
                 color: Colors.white,
               ),
               padding: const EdgeInsets.all(12),
               child: const Image(
-                image: AssetImage('assets/icons/place_holder_avatar.png'),
-                fit: BoxFit.cover,
-              ),
+                  // image: NetworkImage(
+                  //     "https://lh3.googleusercontent.com/a/AAcHTtf-Bq0eFksGb4-8Q7clT2UkyOuDZ39splCe0sQ=s96-c-rg-br100"),
+                  image: AssetImage('assets/icons/place_holder_avatar.png'),
+                  fit: BoxFit.cover,
+                  width: 20,
+                  height: 20),
             ),
           ),
           backgroundColor: Colors.white,
@@ -195,6 +200,7 @@ class _HomeViewState extends State<HomeView> {
           title: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
+              // SizedBox(width: 10), // Add 10 pixels left spacing
               Expanded(
                 child: Container(
                   height: 36,
@@ -202,16 +208,32 @@ class _HomeViewState extends State<HomeView> {
                     color: Colors.grey[200],
                     borderRadius: BorderRadius.circular(5),
                   ),
-                  child: const TextField(
-                    textAlignVertical: TextAlignVertical.center,
-                    decoration: InputDecoration(
-                      hintText: 'Search',
-                      contentPadding: EdgeInsets.only(
-                        left: 12,
-                        bottom: 13,
+                  child: const Row(
+                    children: [
+                      SizedBox(
+                          width:
+                              10), // Add 10 pixels left padding for the hint text
+                      Icon(
+                        Icons.search,
+                        color: Colors.grey,
                       ),
-                      border: InputBorder.none,
-                    ),
+                      SizedBox(width: 8),
+                      Expanded(
+                        child: Align(
+                          alignment: Alignment.center,
+                          child: TextField(
+                            textAlignVertical: TextAlignVertical.center,
+                            decoration: InputDecoration(
+                              hintText: 'Search',
+                              isCollapsed: true,
+                              border: InputBorder.none,
+                              contentPadding:
+                                  EdgeInsets.zero, // Remove bottom padding
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
@@ -284,16 +306,21 @@ class _HomeViewState extends State<HomeView> {
                         );
                       },
                       child: Container(
+                        width: 100,
+                        height: 100,
                         decoration: const BoxDecoration(
                           shape: BoxShape.circle,
                           color: Colors.white,
                         ),
-                        padding: const EdgeInsets.all(14),
-                        margin: const EdgeInsets.symmetric(vertical: 5),
+                        // padding: const EdgeInsets.all(14),
+                        // margin: const EdgeInsets.symmetric(vertical: 5),
                         child: const Image(
+                          // image: NetworkImage(
+                          //   "https://lh3.googleusercontent.com/a/AAcHTtf-Bq0eFksGb4-8Q7clT2UkyOuDZ39splCe0sQ=s96-c-rg-br100",
+                          // ),
                           image: AssetImage(
                               'assets/icons/place_holder_avatar.png'),
-                          fit: BoxFit.contain,
+                          fit: BoxFit.cover,
                         ),
                       ),
                     ),

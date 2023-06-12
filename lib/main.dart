@@ -15,6 +15,3 @@ Future<void> main() async {
     appRunner: () => runApp(const MyApp()),
   );
 }
-
-// flutter run -d chrome --web-port=50951
-

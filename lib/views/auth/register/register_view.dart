@@ -45,9 +45,6 @@ class _RegisterViewState extends State<RegisterView> {
 
   bool isLoading = false;
 
-
-
-
   void _submitForm() {
     if (_formKey.currentState!.validate()) {
       // Perform registration logic
@@ -72,15 +69,14 @@ class _RegisterViewState extends State<RegisterView> {
     return connectivityResult != ConnectivityResult.none;
   }
 
-
-  void _registerUser(RegisterFormValues formValues)async {
+  void _registerUser(RegisterFormValues formValues) async {
     final data = {
       'name': formValues.name,
       'email': formValues.email,
       'password': formValues.password,
     };
 
-      final isConnected = await _checkInternetConnectivity();
+    final isConnected = await _checkInternetConnectivity();
     if (!isConnected) {
       if (mounted) {
         showErrorDialog(
@@ -157,7 +153,13 @@ class _RegisterViewState extends State<RegisterView> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const SizedBox(height: 60),
+                  IconButton(
+                    icon: const Icon(Icons.arrow_back),
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                    },
+                  ),
+                  const SizedBox(height: 10),
                   const CustomTitleText(text: '📝 Join the Comminq Community'),
                   const SizedBox(height: 24),
                   CustomTextField(
@@ -223,13 +225,15 @@ class _RegisterViewState extends State<RegisterView> {
                   const SizedBox(height: 14),
                   !isLoading ? const GoogleButton() : Container(),
                   const SizedBox(height: 24),
-                  !isLoading ?  AuthLink(
-                    message: 'Already have an account? ',
-                    linkText: 'Sign in',
-                    onLinkPressed: () {
-                      navigateToRoute(context, Routes.login);
-                    },
-                  ):Container(),
+                  !isLoading
+                      ? AuthLink(
+                          message: 'Already have an account? ',
+                          linkText: 'Sign in',
+                          onLinkPressed: () {
+                            navigateToRoute(context, Routes.login);
+                          },
+                        )
+                      : Container(),
                 ],
               ),
             ),
