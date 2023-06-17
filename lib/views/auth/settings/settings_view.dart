@@ -1,15 +1,20 @@
 import "package:flutter/material.dart";
 import "package:flutter/services.dart";
-import "package:sentry_flutter/sentry_flutter.dart";
+import 'package:image_picker/image_picker.dart';
+// import "package:sentry_flutter/sentry_flutter.dart";
 
 import "../../../models/user_profile.dart";
+import "../../../services/internet_connectivity.dart";
 import "../../../services/user_service.dart";
+// import "../../../utils/dialog_utils.dart";
 import "../../../utils/dialog_utils.dart";
+import "../../../utils/helpers.dart";
 import "../../../widgets/common/auth_button.dart";
 import "../../../widgets/common/custom_text_field.dart";
+import '../../../widgets/common/custom_avatar.dart';
 
 class SettingsView extends StatefulWidget {
-  final UserProfile? userProfile;
+  final UserProfile userProfile;
   final Function onUpdateProfile;
 
   const SettingsView({
@@ -25,15 +30,15 @@ class SettingsView extends StatefulWidget {
 class _SettingsViewState extends State<SettingsView> {
   late TextEditingController _usernameController;
   late TextEditingController _emailController;
-
   bool isLoading = false;
+  final ImagePicker _picker = ImagePicker();
 
   @override
   void initState() {
     super.initState();
     _usernameController =
-        TextEditingController(text: widget.userProfile?.username);
-    _emailController = TextEditingController(text: widget.userProfile?.email);
+        TextEditingController(text: widget.userProfile.username);
+    _emailController = TextEditingController(text: widget.userProfile.email);
   }
 
   @override
@@ -44,32 +49,34 @@ class _SettingsViewState extends State<SettingsView> {
   }
 
   void _updateProfile() {
+    // check the internet here
+    // check the internet here
+    InternetConnectivity.checkConnectivity(context).then((isConnected) {
+      if (isConnected) {
+        _performUpdate();
+      }
+    });
+  }
+
+  void _performUpdate() {
     final newUsername = _usernameController.text.trim();
     final newEmail = _emailController.text.trim();
 
-    // Update the user profile object directly
-    // widget.userProfile?.username = newUsername;
-    // widget.userProfile?.email = newEmail;
-
-    final data = {
-      'name': newUsername,
-      'email': newEmail,
-    };
-
-    debugPrint("data $data");
-    debugPrint("id ${widget.userProfile?.id ?? ''}");
+    ResponseProfile data = ResponseProfile(
+        id: widget.userProfile.id,
+        name: newUsername,
+        email: newEmail,
+        password: widget.userProfile.password,
+        picture: widget.userProfile.picture);
 
     setState(() {
       isLoading = true;
     });
-    try {
-      userHttpService
-          .updateProfile(widget.userProfile?.id, data)
-          .then((response) {
-        // Update success handling
-        // Call the onUpdateProfile callback to refresh the user profile
-        // widget.onUpdateProfile();
 
+    userHttpService.updateProfile(widget.userProfile.id, data).then((response) {
+      if (response.statusCode == 200) {
+        debugPrint("Response $response");
+        // Update success handling
         showDialog(
           context: context,
           builder: (BuildContext context) {
@@ -81,6 +88,7 @@ class _SettingsViewState extends State<SettingsView> {
                 ElevatedButton(
                   onPressed: () {
                     Navigator.of(context).pop();
+                    widget.onUpdateProfile();
                   },
                   child: const Text('OK'),
                 ),
@@ -88,36 +96,50 @@ class _SettingsViewState extends State<SettingsView> {
             );
           },
         );
-      }).catchError((error) {
-        final String errorMessage = error.response.toString();
+      } else {
+        // final error = response.data?.;
         showErrorDialog(
           context: context,
           title: "Update Profile Error",
-          content: errorMessage,
+          content: "error",
         );
-      }).whenComplete(() {
-        setState(() {
-          isLoading = false;
-        });
+      }
+    }).catchError((error) {
+      return;
+      // showErrorDialog(
+      //   context: context,
+      //   title: "Update Profile Error",
+      //   content: error.toString(),
+      // );
+      // Sentry.captureException(error);
+    }).whenComplete(() {
+      setState(() {
+        isLoading = false;
       });
-    } catch (error, stackTrace) {
-      Sentry.captureException(error, stackTrace: stackTrace);
+    });
+  }
+
+  Future<void> _openCamera() async {
+    final pickedImage = await _picker.pickImage(source: ImageSource.camera);
+    if (pickedImage != null) {
+      // Handle the picked image from camera
     }
   }
 
-  void _hideKeyboard() {
-    final currentFocus = FocusScope.of(context);
-    if (!currentFocus.hasPrimaryFocus) {
-      currentFocus.unfocus();
+  Future<void> _openGallery() async {
+    final pickedImage = await _picker.pickImage(source: ImageSource.gallery);
+    if (pickedImage != null) {
+      // Handle the picked image from gallery
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final userProfile = widget.userProfile;
+    final String profilePicture = widget.userProfile.picture;
+    final bool hasProfilePicture = profilePicture.isNotEmpty;
 
     return GestureDetector(
-      onTap: _hideKeyboard,
+      onTap: () => hideKeyboard(context),
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Settings'),
@@ -139,41 +161,50 @@ class _SettingsViewState extends State<SettingsView> {
                 Stack(
                   alignment: Alignment.center,
                   children: [
-                    Container(
-                      decoration: const BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: Colors.white,
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: CustomAvatar(
+                        profilePicture: profilePicture,
+                        hasProfilePicture: hasProfilePicture,
                       ),
-                      margin: const EdgeInsets.symmetric(vertical: 5),
-                      child: userProfile!.picture.isNotEmpty
-                          ? Image.network(
-                              userProfile.picture,
-                              fit: BoxFit.cover,
-                              width: 60,
-                              height: 60,
-                            )
-                          : const Image(
-                              image: AssetImage(
-                                'assets/icons/place_holder_avatar.png',
-                              ),
-                              fit: BoxFit.cover,
-                              width: 60,
-                              height: 60,
-                            ),
                     ),
                     Positioned(
-                      bottom: 30,
-                      right: 90,
-                      child: Container(
-                        decoration: const BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: Colors.blue,
-                        ),
-                        padding: const EdgeInsets.all(6),
-                        child: const Icon(
-                          Icons.add,
-                          color: Colors.white,
-                          size: 16,
+                      top: 10,
+                      right: MediaQuery.of(context).size.width / 2 - 67,
+                      child: GestureDetector(
+                        onTap: () {
+                          showModalBottomSheet(
+                            context: context,
+                            builder: (BuildContext context) {
+                              return Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  ListTile(
+                                    leading: const Icon(Icons.camera),
+                                    title: const Text('Take a photo'),
+                                    onTap: _openCamera,
+                                  ),
+                                  ListTile(
+                                    leading: const Icon(Icons.photo_library),
+                                    title: const Text('Choose from gallery'),
+                                    onTap: _openGallery,
+                                  ),
+                                ],
+                              );
+                            },
+                          );
+                        },
+                        child: Container(
+                          decoration: const BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Colors.blue,
+                          ),
+                          padding: const EdgeInsets.all(6),
+                          child: const Icon(
+                            Icons.edit,
+                            color: Colors.white,
+                            size: 18,
+                          ),
                         ),
                       ),
                     ),

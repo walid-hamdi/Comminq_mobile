@@ -1,3 +1,4 @@
 {
-  "cSpell.words": ["autovalidate", "comminq", "cupertino", "dotenv", "unfocus"]
+  "cSpell.words": ["autovalidate", "comminq", "cupertino", "dotenv", "unfocus"],
+  "java.configuration.updateBuildConfiguration": "interactive"
 }

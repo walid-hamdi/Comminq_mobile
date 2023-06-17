@@ -1,13 +1,12 @@
 import 'package:comminq/services/user_service.dart';
 import 'package:comminq/utils/constants.dart';
 import 'package:comminq/utils/helpers.dart';
-import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 
 import '../../environment.dart';
-import '../../utils/dialog_utils.dart';
+import '../../services/internet_connectivity.dart';
 import '../../utils/secure_storage.dart';
 import '../common/loading_indicator.dart';
 
@@ -21,28 +20,22 @@ class GoogleButton extends StatefulWidget {
 class _GoogleButtonState extends State<GoogleButton> {
   bool isLoading = false;
 
-  Future<bool> _checkInternetConnectivity() async {
-    final connectivityResult = await Connectivity().checkConnectivity();
-    return connectivityResult != ConnectivityResult.none;
+  void _handleButtonPress() {
+    // check the internet here
+    InternetConnectivity.checkConnectivity(context).then((isConnected) {
+      if (isConnected) {
+        _performGoogleSignIn();
+      }
+    });
   }
 
-  void _handleButtonPress() async {
-    final isConnected = await _checkInternetConnectivity();
-    if (!isConnected) {
-      if (mounted) {
-        showErrorDialog(
-          context: context,
-          title: "No Internet Connection",
-          content: "Please check your internet connection and try again.",
-        );
-      }
-      return;
-    }
-
+  void _performGoogleSignIn() async {
     try {
       final googleSignIn = GoogleSignIn(
         clientId: Environment.clientId,
       );
+
+      debugPrint("Check client id ${Environment.clientId}");
 
       final result = await googleSignIn.signIn();
 

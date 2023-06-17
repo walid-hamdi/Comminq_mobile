@@ -42,8 +42,7 @@ class HttpService<TProfile, TAuth> {
     return userProfile;
   }
 
-  Future<Response<TProfile>> updateProfile(
-      String? id, Map<String, dynamic> data) {
+  Future<Response<TProfile>> updateProfile(String? id, TProfile data) {
     return _client.patch<TProfile>('$endpoint/$id', data: data);
   }
 

@@ -2,10 +2,10 @@ import 'package:comminq/services/user_service.dart';
 import 'package:comminq/utils/constants.dart';
 import 'package:comminq/utils/helpers.dart';
 import 'package:comminq/widgets/common/auth_link.dart';
-import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 
+import '../../../services/internet_connectivity.dart';
 import '../../../utils/dialog_utils.dart';
 import '../../../utils/email_validator.dart';
 import '../../../utils/secure_storage.dart';
@@ -64,29 +64,21 @@ class _RegisterViewState extends State<RegisterView> {
     }
   }
 
-  Future<bool> _checkInternetConnectivity() async {
-    final connectivityResult = await Connectivity().checkConnectivity();
-    return connectivityResult != ConnectivityResult.none;
+  void _registerUser(RegisterFormValues formValues) {
+    // check the internet here
+    InternetConnectivity.checkConnectivity(context).then((isConnected) {
+      if (isConnected) {
+        _performRegister(formValues);
+      }
+    });
   }
 
-  void _registerUser(RegisterFormValues formValues) async {
+  void _performRegister(formValues) {
     final data = {
       'name': formValues.name,
       'email': formValues.email,
       'password': formValues.password,
     };
-
-    final isConnected = await _checkInternetConnectivity();
-    if (!isConnected) {
-      if (mounted) {
-        showErrorDialog(
-          context: context,
-          title: "No Internet Connection",
-          content: "Please check your internet connection and try again.",
-        );
-      }
-      return;
-    }
 
     setState(() {
       isLoading = true;
@@ -131,17 +123,10 @@ class _RegisterViewState extends State<RegisterView> {
     });
   }
 
-  void _hideKeyboard() {
-    final currentFocus = FocusScope.of(context);
-    if (!currentFocus.hasPrimaryFocus) {
-      currentFocus.unfocus();
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: _hideKeyboard,
+      onTap: () => hideKeyboard(context),
       child: Scaffold(
         body: SingleChildScrollView(
           child: Padding(
@@ -153,6 +138,7 @@ class _RegisterViewState extends State<RegisterView> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  const SizedBox(height: 16),
                   IconButton(
                     icon: const Icon(Icons.arrow_back),
                     onPressed: () {
