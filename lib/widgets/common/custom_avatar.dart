@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 class CustomAvatar extends StatelessWidget {
   final String? profilePicture;
-  final bool hasProfilePicture;
+  final bool? hasProfilePicture;
 
   const CustomAvatar({
     Key? key,
@@ -15,7 +15,9 @@ class CustomAvatar extends StatelessWidget {
     return ClipOval(
       child: Container(
         color: Colors.white,
-        child: hasProfilePicture
+        width: 50,
+        height: 50,
+        child: hasProfilePicture!
             ? Image.network(
                 profilePicture!,
               )

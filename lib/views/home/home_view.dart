@@ -132,8 +132,6 @@ class _HomeViewState extends State<HomeView> {
         password: profilePassword,
       );
 
-      debugPrint("UserProfile ${userProfile.email}");
-
       setState(() {
         _userProfile = userProfile;
       });

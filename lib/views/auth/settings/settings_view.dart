@@ -1,6 +1,7 @@
 import "package:flutter/material.dart";
 import "package:flutter/services.dart";
 import 'package:image_picker/image_picker.dart';
+import "package:sentry_flutter/sentry_flutter.dart";
 // import "package:sentry_flutter/sentry_flutter.dart";
 
 import "../../../models/user_profile.dart";
@@ -62,56 +63,55 @@ class _SettingsViewState extends State<SettingsView> {
     final newUsername = _usernameController.text.trim();
     final newEmail = _emailController.text.trim();
 
-    ResponseProfile data = ResponseProfile(
-        id: widget.userProfile.id,
-        name: newUsername,
-        email: newEmail,
-        password: widget.userProfile.password,
-        picture: widget.userProfile.picture);
+    final updatedProfile = ResponseProfile(
+      // id: widget.userProfile.id,
+      name: newUsername,
+      email: newEmail,
+      // password: widget.userProfile.password,
+      // picture: widget.userProfile.picture,
+    );
 
     setState(() {
       isLoading = true;
     });
 
-    userHttpService.updateProfile(widget.userProfile.id, data).then((response) {
-      if (response.statusCode == 200) {
-        debugPrint("Response $response");
-        // Update success handling
-        showDialog(
-          context: context,
-          builder: (BuildContext context) {
-            return AlertDialog(
-              title: const Text('Profile Updated'),
-              content:
-                  const Text('Your profile has been updated successfully.'),
-              actions: [
-                ElevatedButton(
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                    widget.onUpdateProfile();
-                  },
-                  child: const Text('OK'),
-                ),
-              ],
-            );
-          },
-        );
-      } else {
-        // final error = response.data?.;
-        showErrorDialog(
-          context: context,
-          title: "Update Profile Error",
-          content: "error",
-        );
-      }
+    userHttpService.updateProfile(
+      widget.userProfile.id,
+      {
+        "name": updatedProfile.name,
+        "email": updatedProfile.email,
+      },
+    ).then((response) {
+      // Update success handling
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Text("Profile Updated"),
+            content: const Text('Your profile has been updated successfully.'),
+            actions: [
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  widget.onUpdateProfile();
+                },
+                child: const Text('OK'),
+              ),
+            ],
+          );
+        },
+      );
     }).catchError((error) {
-      return;
-      // showErrorDialog(
-      //   context: context,
-      //   title: "Update Profile Error",
-      //   content: error.toString(),
-      // );
-      // Sentry.captureException(error);
+      final errorData = error.response?.data;
+      final errorMessage =
+          errorData != null ? errorData['error'] : 'Unknown error occurred';
+      // Handle the specific error message
+      showErrorDialog(
+        context: context,
+        title: "Update Profile Error",
+        content: errorMessage,
+      );
+      Sentry.captureException(errorMessage);
     }).whenComplete(() {
       setState(() {
         isLoading = false;
@@ -135,8 +135,8 @@ class _SettingsViewState extends State<SettingsView> {
 
   @override
   Widget build(BuildContext context) {
-    final String profilePicture = widget.userProfile.picture;
-    final bool hasProfilePicture = profilePicture.isNotEmpty;
+    final String? profilePicture = widget.userProfile.picture;
+    final bool? hasProfilePicture = profilePicture?.isNotEmpty;
 
     return GestureDetector(
       onTap: () => hideKeyboard(context),
@@ -152,83 +152,86 @@ class _SettingsViewState extends State<SettingsView> {
             statusBarBrightness: Brightness.light,
           ),
         ),
-        body: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: CustomAvatar(
-                        profilePicture: profilePicture,
-                        hasProfilePicture: hasProfilePicture,
-                      ),
-                    ),
-                    Positioned(
-                      top: 10,
-                      right: MediaQuery.of(context).size.width / 2 - 67,
-                      child: GestureDetector(
-                        onTap: () {
-                          showModalBottomSheet(
-                            context: context,
-                            builder: (BuildContext context) {
-                              return Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  ListTile(
-                                    leading: const Icon(Icons.camera),
-                                    title: const Text('Take a photo'),
-                                    onTap: _openCamera,
-                                  ),
-                                  ListTile(
-                                    leading: const Icon(Icons.photo_library),
-                                    title: const Text('Choose from gallery'),
-                                    onTap: _openGallery,
-                                  ),
-                                ],
-                              );
-                            },
+        body: Container(
+          margin: const EdgeInsets.symmetric(horizontal: 16.0),
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  GestureDetector(
+                    onTap: () {
+                      showModalBottomSheet(
+                        context: context,
+                        builder: (BuildContext context) {
+                          return Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              ListTile(
+                                leading: const Icon(Icons.camera),
+                                title: const Text('Take a photo'),
+                                onTap: _openCamera,
+                              ),
+                              ListTile(
+                                leading: const Icon(Icons.photo_library),
+                                title: const Text('Choose from gallery'),
+                                onTap: _openGallery,
+                              ),
+                            ],
                           );
                         },
-                        child: Container(
-                          decoration: const BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: Colors.blue,
-                          ),
-                          padding: const EdgeInsets.all(6),
-                          child: const Icon(
-                            Icons.edit,
-                            color: Colors.white,
-                            size: 18,
+                      );
+                    },
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: CustomAvatar(
+                            profilePicture: profilePicture,
+                            hasProfilePicture: hasProfilePicture,
                           ),
                         ),
-                      ),
+                        Positioned(
+                          top: 10,
+                          right: MediaQuery.of(context).size.width / 2 - 67,
+                          child: Container(
+                            decoration: const BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: Colors.blue,
+                            ),
+                            padding: const EdgeInsets.all(3),
+                            child: const Icon(
+                              Icons.edit,
+                              color: Colors.white,
+                              size: 16,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                CustomTextField(
-                  controller: _usernameController,
-                  labelText: 'Name',
-                  showSuffixIcon: false,
-                ),
-                const SizedBox(height: 16),
-                CustomTextField(
-                  controller: _emailController,
-                  labelText: 'Email',
-                  showSuffixIcon: false,
-                ),
-                const SizedBox(height: 16),
-                AuthButton(
-                  isLoading: isLoading,
-                  label: "Update Profile",
-                  onPressed: isLoading ? null : _updateProfile,
-                )
-              ],
+                  ),
+                  const SizedBox(height: 16),
+                  CustomTextField(
+                    controller: _usernameController,
+                    labelText: 'Name',
+                    showSuffixIcon: false,
+                  ),
+                  const SizedBox(height: 16),
+                  CustomTextField(
+                    controller: _emailController,
+                    labelText: 'Email',
+                    showSuffixIcon: false,
+                  ),
+                  const SizedBox(height: 16),
+                  AuthButton(
+                    isLoading: isLoading,
+                    label: "Update Profile",
+                    onPressed: isLoading ? null : _updateProfile,
+                  )
+                ],
+              ),
             ),
           ),
         ),
