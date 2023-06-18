@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import "package:flutter/material.dart";
 import "package:flutter/services.dart";
 import 'package:image_picker/image_picker.dart';
@@ -13,6 +15,7 @@ import "../../../utils/helpers.dart";
 import "../../../widgets/common/auth_button.dart";
 import "../../../widgets/common/custom_text_field.dart";
 import '../../../widgets/common/custom_avatar.dart';
+import "../../../utils/constants.dart";
 
 class SettingsView extends StatefulWidget {
   final UserProfile userProfile;
@@ -33,6 +36,8 @@ class _SettingsViewState extends State<SettingsView> {
   late TextEditingController _emailController;
   bool isLoading = false;
   final ImagePicker _picker = ImagePicker();
+  File? _pickedImage;
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   @override
   void initState() {
@@ -75,13 +80,19 @@ class _SettingsViewState extends State<SettingsView> {
       isLoading = true;
     });
 
-    userHttpService.updateProfile(
+    final updatedData = {
+      "name": updatedProfile.name,
+      "email": updatedProfile.email,
+    };
+
+    debugPrint("_pickedImage : $_pickedImage");
+    userHttpService
+        .updateProfile(
       widget.userProfile.id,
-      {
-        "name": updatedProfile.name,
-        "email": updatedProfile.email,
-      },
-    ).then((response) {
+      updatedData,
+      profilePicture: _pickedImage?.path != null ? _pickedImage : null,
+    )
+        .then((response) {
       // Update success handling
       showDialog(
         context: context,
@@ -94,6 +105,10 @@ class _SettingsViewState extends State<SettingsView> {
                 onPressed: () {
                   Navigator.of(context).pop();
                   widget.onUpdateProfile();
+                  Navigator.popUntil(
+                    _scaffoldKey.currentContext!,
+                    ModalRoute.withName(Routes.home),
+                  );
                 },
                 child: const Text('OK'),
               ),
@@ -120,27 +135,35 @@ class _SettingsViewState extends State<SettingsView> {
   }
 
   Future<void> _openCamera() async {
+    Navigator.pop(context);
     final pickedImage = await _picker.pickImage(source: ImageSource.camera);
     if (pickedImage != null) {
-      // Handle the picked image from camera
+      setState(() {
+        _pickedImage = File(pickedImage.path);
+      });
     }
   }
 
   Future<void> _openGallery() async {
+    Navigator.pop(context);
     final pickedImage = await _picker.pickImage(source: ImageSource.gallery);
     if (pickedImage != null) {
-      // Handle the picked image from gallery
+      setState(() {
+        _pickedImage = File(pickedImage.path);
+      });
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final String? profilePicture = widget.userProfile.picture;
+    final String? profilePicture =
+        _pickedImage?.path ?? widget.userProfile.picture;
     final bool? hasProfilePicture = profilePicture?.isNotEmpty;
 
     return GestureDetector(
       onTap: () => hideKeyboard(context),
       child: Scaffold(
+        key: _scaffoldKey,
         appBar: AppBar(
           title: const Text('Settings'),
           backgroundColor: Colors.white,

@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 
 class CustomAvatar extends StatelessWidget {
@@ -18,9 +20,15 @@ class CustomAvatar extends StatelessWidget {
         width: 50,
         height: 50,
         child: hasProfilePicture!
-            ? Image.network(
-                profilePicture!,
-              )
+            ? profilePicture!.startsWith('http')
+                ? Image.network(
+                    profilePicture!,
+                    fit: BoxFit.cover,
+                  )
+                : Image.file(
+                    File(profilePicture!),
+                    fit: BoxFit.cover,
+                  )
             : const Icon(
                 Icons.person_add_alt_1,
                 size: 30,
