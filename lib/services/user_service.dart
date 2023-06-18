@@ -2,18 +2,18 @@ import '../environment.dart';
 import "./http_service.dart";
 
 class ResponseProfile {
-  final String id;
+  final String? id;
   final String name;
   final String email;
-  final String password;
-  final String picture;
+  final String? password;
+  final String? picture;
 
   ResponseProfile({
-    required this.id,
+    this.id,
     required this.name,
     required this.email,
-    required this.password,
-    required this.picture,
+    this.password,
+    this.picture,
   });
 
   factory ResponseProfile.fromJson(Map<String, dynamic> json) {

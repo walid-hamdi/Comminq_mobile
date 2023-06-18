@@ -1,15 +1,24 @@
+import 'dart:io';
+
 import "package:flutter/material.dart";
 import "package:flutter/services.dart";
+import 'package:image_picker/image_picker.dart';
 import "package:sentry_flutter/sentry_flutter.dart";
+// import "package:sentry_flutter/sentry_flutter.dart";
 
 import "../../../models/user_profile.dart";
+import "../../../services/internet_connectivity.dart";
 import "../../../services/user_service.dart";
+// import "../../../utils/dialog_utils.dart";
 import "../../../utils/dialog_utils.dart";
+import "../../../utils/helpers.dart";
 import "../../../widgets/common/auth_button.dart";
 import "../../../widgets/common/custom_text_field.dart";
+import '../../../widgets/common/custom_avatar.dart';
+import "../../../utils/constants.dart";
 
 class SettingsView extends StatefulWidget {
-  final UserProfile? userProfile;
+  final UserProfile userProfile;
   final Function onUpdateProfile;
 
   const SettingsView({
@@ -25,15 +34,17 @@ class SettingsView extends StatefulWidget {
 class _SettingsViewState extends State<SettingsView> {
   late TextEditingController _usernameController;
   late TextEditingController _emailController;
-
   bool isLoading = false;
+  final ImagePicker _picker = ImagePicker();
+  File? _pickedImage;
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   @override
   void initState() {
     super.initState();
     _usernameController =
-        TextEditingController(text: widget.userProfile?.username);
-    _emailController = TextEditingController(text: widget.userProfile?.email);
+        TextEditingController(text: widget.userProfile.username);
+    _emailController = TextEditingController(text: widget.userProfile.email);
   }
 
   @override
@@ -44,81 +55,115 @@ class _SettingsViewState extends State<SettingsView> {
   }
 
   void _updateProfile() {
+    // check the internet here
+    // check the internet here
+    InternetConnectivity.checkConnectivity(context).then((isConnected) {
+      if (isConnected) {
+        _performUpdate();
+      }
+    });
+  }
+
+  void _performUpdate() {
     final newUsername = _usernameController.text.trim();
     final newEmail = _emailController.text.trim();
 
-    // Update the user profile object directly
-    // widget.userProfile?.username = newUsername;
-    // widget.userProfile?.email = newEmail;
-
-    final data = {
-      'name': newUsername,
-      'email': newEmail,
-    };
-
-    debugPrint("data $data");
-    debugPrint("id ${widget.userProfile?.id ?? ''}");
+    final updatedProfile = ResponseProfile(
+      // id: widget.userProfile.id,
+      name: newUsername,
+      email: newEmail,
+      // password: widget.userProfile.password,
+      // picture: widget.userProfile.picture,
+    );
 
     setState(() {
       isLoading = true;
     });
-    try {
-      userHttpService
-          .updateProfile(widget.userProfile?.id, data)
-          .then((response) {
-        // Update success handling
-        // Call the onUpdateProfile callback to refresh the user profile
-        // widget.onUpdateProfile();
 
-        showDialog(
-          context: context,
-          builder: (BuildContext context) {
-            return AlertDialog(
-              title: const Text('Profile Updated'),
-              content:
-                  const Text('Your profile has been updated successfully.'),
-              actions: [
-                ElevatedButton(
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                  },
-                  child: const Text('OK'),
-                ),
-              ],
-            );
-          },
-        );
-      }).catchError((error) {
-        final String errorMessage = error.response.toString();
-        showErrorDialog(
-          context: context,
-          title: "Update Profile Error",
-          content: errorMessage,
-        );
-      }).whenComplete(() {
-        setState(() {
-          isLoading = false;
-        });
+    final updatedData = {
+      "name": updatedProfile.name,
+      "email": updatedProfile.email,
+    };
+
+    debugPrint("_pickedImage : $_pickedImage");
+    userHttpService
+        .updateProfile(
+      widget.userProfile.id,
+      updatedData,
+      profilePicture: _pickedImage?.path != null ? _pickedImage : null,
+    )
+        .then((response) {
+      // Update success handling
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Text("Profile Updated"),
+            content: const Text('Your profile has been updated successfully.'),
+            actions: [
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  widget.onUpdateProfile();
+                  Navigator.popUntil(
+                    _scaffoldKey.currentContext!,
+                    ModalRoute.withName(Routes.home),
+                  );
+                },
+                child: const Text('OK'),
+              ),
+            ],
+          );
+        },
+      );
+    }).catchError((error) {
+      final errorData = error.response?.data;
+      final errorMessage =
+          errorData != null ? errorData['error'] : 'Unknown error occurred';
+      // Handle the specific error message
+      showErrorDialog(
+        context: context,
+        title: "Update Profile Error",
+        content: errorMessage,
+      );
+      Sentry.captureException(errorMessage);
+    }).whenComplete(() {
+      setState(() {
+        isLoading = false;
       });
-    } catch (error, stackTrace) {
-      Sentry.captureException(error, stackTrace: stackTrace);
+    });
+  }
+
+  Future<void> _openCamera() async {
+    Navigator.pop(context);
+    final pickedImage = await _picker.pickImage(source: ImageSource.camera);
+    if (pickedImage != null) {
+      setState(() {
+        _pickedImage = File(pickedImage.path);
+      });
     }
   }
 
-  void _hideKeyboard() {
-    final currentFocus = FocusScope.of(context);
-    if (!currentFocus.hasPrimaryFocus) {
-      currentFocus.unfocus();
+  Future<void> _openGallery() async {
+    Navigator.pop(context);
+    final pickedImage = await _picker.pickImage(source: ImageSource.gallery);
+    if (pickedImage != null) {
+      setState(() {
+        _pickedImage = File(pickedImage.path);
+      });
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final userProfile = widget.userProfile;
+    final String? profilePicture =
+        _pickedImage?.path ?? widget.userProfile.picture;
+    final bool? hasProfilePicture = profilePicture?.isNotEmpty;
 
     return GestureDetector(
-      onTap: _hideKeyboard,
+      onTap: () => hideKeyboard(context),
       child: Scaffold(
+        key: _scaffoldKey,
         appBar: AppBar(
           title: const Text('Settings'),
           backgroundColor: Colors.white,
@@ -130,74 +175,86 @@ class _SettingsViewState extends State<SettingsView> {
             statusBarBrightness: Brightness.light,
           ),
         ),
-        body: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    Container(
-                      decoration: const BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: Colors.white,
-                      ),
-                      margin: const EdgeInsets.symmetric(vertical: 5),
-                      child: userProfile!.picture.isNotEmpty
-                          ? Image.network(
-                              userProfile.picture,
-                              fit: BoxFit.cover,
-                              width: 60,
-                              height: 60,
-                            )
-                          : const Image(
-                              image: AssetImage(
-                                'assets/icons/place_holder_avatar.png',
+        body: Container(
+          margin: const EdgeInsets.symmetric(horizontal: 16.0),
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  GestureDetector(
+                    onTap: () {
+                      showModalBottomSheet(
+                        context: context,
+                        builder: (BuildContext context) {
+                          return Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              ListTile(
+                                leading: const Icon(Icons.camera),
+                                title: const Text('Take a photo'),
+                                onTap: _openCamera,
                               ),
-                              fit: BoxFit.cover,
-                              width: 60,
-                              height: 60,
+                              ListTile(
+                                leading: const Icon(Icons.photo_library),
+                                title: const Text('Choose from gallery'),
+                                onTap: _openGallery,
+                              ),
+                            ],
+                          );
+                        },
+                      );
+                    },
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: CustomAvatar(
+                            profilePicture: profilePicture,
+                            hasProfilePicture: hasProfilePicture,
+                          ),
+                        ),
+                        Positioned(
+                          top: 10,
+                          right: MediaQuery.of(context).size.width / 2 - 67,
+                          child: Container(
+                            decoration: const BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: Colors.blue,
                             ),
-                    ),
-                    Positioned(
-                      bottom: 30,
-                      right: 90,
-                      child: Container(
-                        decoration: const BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: Colors.blue,
+                            padding: const EdgeInsets.all(3),
+                            child: const Icon(
+                              Icons.edit,
+                              color: Colors.white,
+                              size: 16,
+                            ),
+                          ),
                         ),
-                        padding: const EdgeInsets.all(6),
-                        child: const Icon(
-                          Icons.add,
-                          color: Colors.white,
-                          size: 16,
-                        ),
-                      ),
+                      ],
                     ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                CustomTextField(
-                  controller: _usernameController,
-                  labelText: 'Name',
-                  showSuffixIcon: false,
-                ),
-                const SizedBox(height: 16),
-                CustomTextField(
-                  controller: _emailController,
-                  labelText: 'Email',
-                  showSuffixIcon: false,
-                ),
-                const SizedBox(height: 16),
-                AuthButton(
-                  isLoading: isLoading,
-                  label: "Update Profile",
-                  onPressed: isLoading ? null : _updateProfile,
-                )
-              ],
+                  ),
+                  const SizedBox(height: 16),
+                  CustomTextField(
+                    controller: _usernameController,
+                    labelText: 'Name',
+                    showSuffixIcon: false,
+                  ),
+                  const SizedBox(height: 16),
+                  CustomTextField(
+                    controller: _emailController,
+                    labelText: 'Email',
+                    showSuffixIcon: false,
+                  ),
+                  const SizedBox(height: 16),
+                  AuthButton(
+                    isLoading: isLoading,
+                    label: "Update Profile",
+                    onPressed: isLoading ? null : _updateProfile,
+                  )
+                ],
+              ),
             ),
           ),
         ),

@@ -4,11 +4,13 @@ import 'package:google_sign_in/google_sign_in.dart';
 
 import '../../environment.dart';
 import '../../models/user_profile.dart';
+import '../../services/internet_connectivity.dart';
 import '../../services/user_service.dart';
 import '../../utils/constants.dart';
-import '../../utils/dialog_utils.dart';
 import '../../utils/helpers.dart';
 import '../../utils/secure_storage.dart';
+import '../../widgets/common/custom_avatar.dart';
+import '../../widgets/drawer/drawer_widget.dart';
 import '../auth/settings/settings_view.dart';
 
 class HomeView extends StatefulWidget {
@@ -101,14 +103,16 @@ class _HomeViewState extends State<HomeView> {
     });
   }
 
-  void _hideKeyboard() {
-    final currentFocus = FocusScope.of(context);
-    if (!currentFocus.hasPrimaryFocus) {
-      currentFocus.unfocus();
-    }
+  void _fetchUserProfile() {
+    // check the internet here
+    InternetConnectivity.checkConnectivity(context).then((isConnected) {
+      if (isConnected) {
+        _performUserProfile();
+      }
+    });
   }
 
-  void _fetchUserProfile() {
+  void _performUserProfile() {
     setState(() {
       isLoading = true;
     });
@@ -118,26 +122,27 @@ class _HomeViewState extends State<HomeView> {
       final profileUsername = profile.name;
       final profileEmail = profile.email;
       final profilePicture = profile.picture;
+      final profilePassword = profile.password;
 
       final userProfile = UserProfile(
         id: profile.id,
         username: profileUsername,
         email: profileEmail,
         picture: profilePicture,
+        password: profilePassword,
       );
-
-      debugPrint("UserProfile ${userProfile.email}");
 
       setState(() {
         _userProfile = userProfile;
       });
     }).catchError((error) {
-      final String errorMessage = error.response.toString();
-      showErrorDialog(
-        context: context,
-        title: "Retrieve Profile Error",
-        content: errorMessage,
-      );
+      return;
+      // final String errorMessage = error.response.toString();
+      // showErrorDialog(
+      //   context: context,
+      //   title: "Retrieve Profile Error",
+      //   content: errorMessage,
+      // );
     }).whenComplete(() {
       setState(() {
         isLoading = false;
@@ -153,6 +158,12 @@ class _HomeViewState extends State<HomeView> {
 
   @override
   Widget build(BuildContext context) {
+    final String? profilePicture = _userProfile?.picture;
+    final bool hasProfilePicture =
+        profilePicture != null && profilePicture.isNotEmpty;
+
+    debugPrint("profile Picture $profilePicture");
+
     if (isLoading) {
       return const Scaffold(
         body: Center(
@@ -162,7 +173,7 @@ class _HomeViewState extends State<HomeView> {
     }
 
     return GestureDetector(
-      onTap: _hideKeyboard,
+      onTap: () => hideKeyboard(context),
       child: Scaffold(
         key: _scaffoldKey,
         appBar: AppBar(
@@ -170,22 +181,12 @@ class _HomeViewState extends State<HomeView> {
             onTap: () {
               _scaffoldKey.currentState!.openDrawer();
             },
-            child: Container(
-              // margin: const EdgeInsets.only(left: 5),
-              width: 20,
-              height: 20,
-              decoration: const BoxDecoration(
-                shape: BoxShape.circle,
-                color: Colors.white,
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: CustomAvatar(
+                profilePicture: profilePicture,
+                hasProfilePicture: hasProfilePicture,
               ),
-              padding: const EdgeInsets.all(12),
-              child: const Image(
-                  // image: NetworkImage(
-                  //     "https://lh3.googleusercontent.com/a/AAcHTtf-Bq0eFksGb4-8Q7clT2UkyOuDZ39splCe0sQ=s96-c-rg-br100"),
-                  image: AssetImage('assets/icons/place_holder_avatar.png'),
-                  fit: BoxFit.cover,
-                  width: 20,
-                  height: 20),
             ),
           ),
           backgroundColor: Colors.white,
@@ -239,7 +240,11 @@ class _HomeViewState extends State<HomeView> {
               ),
               const SizedBox(width: 5),
               IconButton(
-                icon: const Icon(Icons.messenger),
+                icon: const Icon(
+                  Icons.messenger,
+                  size: 30,
+                  color: Colors.grey,
+                ),
                 onPressed: () {
                   // Open the messenger
                 },
@@ -248,109 +253,24 @@ class _HomeViewState extends State<HomeView> {
             ],
           ),
         ),
-        drawer: Container(
-          width: MediaQuery.of(context).size.width * 0.8,
-          decoration: BoxDecoration(
-            color: Colors.black.withOpacity(0.8),
-            borderRadius: const BorderRadius.only(
-              topRight: Radius.circular(20),
-              bottomRight: Radius.circular(20),
-            ),
-          ),
-          child: Drawer(
-            child: ListView(
-              padding: EdgeInsets.zero,
-              children: [
-                UserAccountsDrawerHeader(
-                  decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.7),
-                  ),
-                  accountName: Row(
-                    children: [
-                      const Icon(
-                        Icons.person,
-                        color: Colors.white,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        capitalizeFirstLetter(
-                          _userProfile?.username ?? '',
-                        ),
-                      ),
-                    ],
-                  ),
-                  accountEmail: Row(
-                    children: [
-                      const Icon(
-                        Icons.email,
-                        color: Colors.white,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(_userProfile?.email ?? ''),
-                    ],
-                  ),
-                  currentAccountPicture: GestureDetector(
-                    onTap: () {
-                      // Open user profile
-                    },
-                    child: InkWell(
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => SettingsView(
-                              userProfile: _userProfile,
-                              onUpdateProfile: _fetchUserProfile,
-                            ),
-                          ),
-                        );
-                      },
-                      child: Container(
-                        width: 100,
-                        height: 100,
-                        decoration: const BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: Colors.white,
-                        ),
-                        // padding: const EdgeInsets.all(14),
-                        // margin: const EdgeInsets.symmetric(vertical: 5),
-                        child: const Image(
-                          // image: NetworkImage(
-                          //   "https://lh3.googleusercontent.com/a/AAcHTtf-Bq0eFksGb4-8Q7clT2UkyOuDZ39splCe0sQ=s96-c-rg-br100",
-                          // ),
-                          image: AssetImage(
-                              'assets/icons/place_holder_avatar.png'),
-                          fit: BoxFit.cover,
-                        ),
-                      ),
-                    ),
-                  ),
+        drawer: DrawerWidget(
+          userProfile: _userProfile,
+          profilePicture: profilePicture,
+          hasProfilePicture: hasProfilePicture,
+          onSettingsPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => SettingsView(
+                  userProfile: _userProfile!,
+                  onUpdateProfile: _fetchUserProfile,
                 ),
-                ListTile(
-                  leading: const Icon(Icons.settings),
-                  title: const Text('Settings'),
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => SettingsView(
-                          userProfile: _userProfile,
-                          onUpdateProfile: _fetchUserProfile,
-                        ),
-                      ),
-                    );
-                  },
-                ),
-                ListTile(
-                  leading: const Icon(Icons.logout),
-                  title: const Text('Logout'),
-                  onTap: () {
-                    _performLogout(context);
-                  },
-                ),
-              ],
-            ),
-          ),
+              ),
+            );
+          },
+          onLogoutPressed: () {
+            _performLogout(context);
+          },
         ),
         body: _widgetOptions.elementAt(_selectedIndex),
         bottomNavigationBar: BottomNavigationBar(

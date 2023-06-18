@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
-import 'package:connectivity_plus/connectivity_plus.dart';
 
 import 'package:comminq/utils/constants.dart';
 import 'package:comminq/utils/helpers.dart';
 import 'package:comminq/utils/secure_storage.dart';
+import '../../../services/internet_connectivity.dart';
 import '../../../services/user_service.dart';
 import '../../../utils/dialog_utils.dart';
 import '../../../widgets/common/auth_button.dart';
@@ -51,65 +51,62 @@ class _LoginViewState extends State<LoginView> {
     }
   }
 
-  Future<bool> _checkInternetConnectivity() async {
-    final connectivityResult = await Connectivity().checkConnectivity();
-    return connectivityResult != ConnectivityResult.none;
+  void _loginUser(LoginFormValues formValues) {
+    // check the internet here
+    InternetConnectivity.checkConnectivity(context).then((isConnected) {
+      if (isConnected) {
+        _performLogin(formValues);
+      }
+    });
   }
 
-  void _loginUser(LoginFormValues formValues) async {
-    final isConnected = await _checkInternetConnectivity();
-    if (!isConnected) {
-      if (mounted) {
-        showErrorDialog(
-          context: context,
-          title: "No Internet Connection",
-          content: "Please check your internet connection and try again.",
-        );
-      }
-      return;
-    }
+  void _performLogin(formValues) {
+    final data = {
+      'email': formValues.email,
+      'password': formValues.password,
+    };
 
-    try {
-      final data = {
-        'email': formValues.email,
-        'password': formValues.password,
-      };
+    setState(() {
+      isLoading = true;
+    });
+    final TokenManager tokenManager = TokenManager();
 
-      setState(() {
-        isLoading = true;
-      });
-
-      final response = await userHttpService.login(data);
-
+    userHttpService.login(data).then((response) {
       if (response.statusCode == 200) {
         final Map<String, dynamic> result = extractFromResponse(response.data);
         final String token = result['token'];
 
         if (token.isNotEmpty) {
-          await tokenManager.saveToken(token);
-          if (mounted) {
+          tokenManager.saveToken(token).then((_) {
             navigateToRoute(context, Routes.home);
-          }
+          }).catchError((error) {
+            debugPrint('Error writing token to secure storage: $error');
+          });
         } else {
+          // Handle missing token error
           debugPrint('Token not found in the response');
         }
       } else {
+        // Handle login error
         debugPrint('Login failed with status code ${response.statusCode}');
       }
-    } catch (error, stackTrace) {
-      Sentry.captureException(error, stackTrace: stackTrace);
-    } finally {
+    }).catchError((error) {
+      final Map<String, dynamic> result =
+          extractFromResponse(error.response?.data);
+      final String errorMessage = result['error'];
+      showErrorDialog(
+        context: context,
+        title: "Login Error",
+        content: errorMessage,
+      );
+
+      // Capture the exception with Sentry
+      Sentry.captureException(error);
+    }).whenComplete(() {
       setState(() {
         isLoading = false;
       });
-    }
-  }
-
-  void _hideKeyboard() {
-    final currentFocus = FocusScope.of(context);
-    if (!currentFocus.hasPrimaryFocus) {
-      currentFocus.unfocus();
-    }
+    });
   }
 
   @override
@@ -121,7 +118,7 @@ class _LoginViewState extends State<LoginView> {
     ));
 
     return GestureDetector(
-      onTap: _hideKeyboard,
+      onTap: () => hideKeyboard(context),
       child: Scaffold(
         body: Container(
           margin: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -187,7 +184,7 @@ class _LoginViewState extends State<LoginView> {
                             message: 'New to Comminq? ',
                             linkText: 'Join now',
                             onLinkPressed: () {
-                              navigateToRoute(context, Routes.register);
+                              pushToRoute(context, Routes.register);
                             },
                           )
                         : Container(),

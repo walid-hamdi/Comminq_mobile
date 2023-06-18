@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:comminq/services/user_service.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
@@ -42,9 +44,27 @@ class HttpService<TProfile, TAuth> {
     return userProfile;
   }
 
-  Future<Response<TProfile>> updateProfile(
-      String? id, Map<String, dynamic> data) {
-    return _client.patch<TProfile>('$endpoint/$id', data: data);
+  // Future<Response<dynamic>> updateProfile(String? id, dynamic data) async {
+  //   return await _client.patch<dynamic>('$endpoint/$id', data: data);
+  // }
+
+  Future<Response<dynamic>> updateProfile(String? id, dynamic data,
+      {File? profilePicture}) async {
+    FormData formData = FormData.fromMap(data);
+
+    if (profilePicture != null) {
+      formData.files.add(
+        MapEntry(
+          'profile_picture',
+          await MultipartFile.fromFile(profilePicture.path),
+        ),
+      );
+    }
+
+    return await _client.patch<dynamic>(
+      '$endpoint/$id',
+      data: formData,
+    );
   }
 
   Future<Response<TAuth>> login(Map<String, dynamic> data) {
