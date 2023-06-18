@@ -128,99 +128,103 @@ class _RegisterViewState extends State<RegisterView> {
     return GestureDetector(
       onTap: () => hideKeyboard(context),
       child: Scaffold(
-        body: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Form(
-              key: _formKey,
-              autovalidateMode:
-                  AutovalidateMode.always, // Enable continuous validation
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  const SizedBox(height: 16),
-                  IconButton(
-                    icon: const Icon(Icons.arrow_back),
-                    onPressed: () {
-                      Navigator.of(context).pop();
-                    },
-                  ),
-                  const SizedBox(height: 10),
-                  const CustomTitleText(text: '📝 Join the Comminq Community'),
-                  const SizedBox(height: 24),
-                  CustomTextField(
-                    controller: _nameController,
-                    labelText: 'Name',
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter your name';
-                      }
-                      return null;
-                    },
-                    showSuffixIcon: false,
-                  ),
-                  const SizedBox(height: 16),
-                  CustomTextField(
-                    controller: _emailController,
-                    labelText: 'Email Address',
-                    keyboardType: TextInputType.emailAddress,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter your email address';
-                      } else if (!isValidEmail(value)) {
-                        return 'Please enter a valid email address';
-                      }
-                      return null;
-                    },
-                    showSuffixIcon: false,
-                  ),
-                  const SizedBox(height: 16),
-                  CustomTextField(
-                    controller: _passwordController,
-                    labelText: 'Password',
-                    obscureText: true,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter your password';
-                      } else if (value.length < 6) {
-                        return 'Password should be at least 6 characters long';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  CustomTextField(
-                    controller: _confirmPasswordController,
-                    labelText: 'Password Confirm',
-                    obscureText: true,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please confirm your password';
-                      } else if (value != _passwordController.text) {
-                        return 'Passwords do not match';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 24),
-                  AuthButton(
-                    onPressed: isLoading ? null : _submitForm,
-                    isLoading: isLoading,
-                    label: "Sign up",
-                  ),
-                  const SizedBox(height: 14),
-                  !isLoading ? const GoogleButton() : Container(),
-                  const SizedBox(height: 24),
-                  !isLoading
-                      ? AuthLink(
-                          message: 'Already have an account? ',
-                          linkText: 'Sign in',
-                          onLinkPressed: () {
-                            navigateToRoute(context, Routes.login);
-                          },
-                        )
-                      : Container(),
-                ],
+        body: Container(
+          margin: const EdgeInsets.symmetric(horizontal: 16.0),
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Form(
+                key: _formKey,
+                autovalidateMode:
+                    AutovalidateMode.always, // Enable continuous validation
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const SizedBox(height: 16),
+                    IconButton(
+                      icon: const Icon(Icons.arrow_back),
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                      },
+                    ),
+                    const SizedBox(height: 10),
+                    const CustomTitleText(
+                        text: '📝 Join the Comminq Community'),
+                    const SizedBox(height: 24),
+                    CustomTextField(
+                      controller: _nameController,
+                      labelText: 'Name',
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please enter your name';
+                        }
+                        return null;
+                      },
+                      showSuffixIcon: false,
+                    ),
+                    const SizedBox(height: 16),
+                    CustomTextField(
+                      controller: _emailController,
+                      labelText: 'Email Address',
+                      keyboardType: TextInputType.emailAddress,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please enter your email address';
+                        } else if (!isValidEmail(value)) {
+                          return 'Please enter a valid email address';
+                        }
+                        return null;
+                      },
+                      showSuffixIcon: false,
+                    ),
+                    const SizedBox(height: 16),
+                    CustomTextField(
+                      controller: _passwordController,
+                      labelText: 'Password',
+                      obscureText: true,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please enter your password';
+                        } else if (value.length < 6) {
+                          return 'Password should be at least 6 characters long';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    CustomTextField(
+                      controller: _confirmPasswordController,
+                      labelText: 'Password Confirm',
+                      obscureText: true,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please confirm your password';
+                        } else if (value != _passwordController.text) {
+                          return 'Passwords do not match';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 24),
+                    AuthButton(
+                      onPressed: isLoading ? null : _submitForm,
+                      isLoading: isLoading,
+                      label: "Sign up",
+                    ),
+                    const SizedBox(height: 14),
+                    !isLoading ? const GoogleButton() : Container(),
+                    const SizedBox(height: 24),
+                    !isLoading
+                        ? AuthLink(
+                            message: 'Already have an account? ',
+                            linkText: 'Sign in',
+                            onLinkPressed: () {
+                              navigateToRoute(context, Routes.login);
+                            },
+                          )
+                        : Container(),
+                  ],
+                ),
               ),
             ),
           ),
