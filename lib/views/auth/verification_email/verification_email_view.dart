@@ -76,7 +76,11 @@ class _VerificationEmailViewState extends State<VerificationEmailView> {
   @override
   void initState() {
     super.initState();
-    _listenToProfile();
+    InternetConnectivity.checkConnectivity(context).then((isConnected) {
+      if (isConnected) {
+        _listenToProfile();
+      }
+    });
   }
 
   @override
@@ -86,6 +90,7 @@ class _VerificationEmailViewState extends State<VerificationEmailView> {
   }
 
   void _listenToProfile() {
+    // TODO: it should have solution to reduce the loading times to the server
     _profileSubscription =
         Stream.periodic(const Duration(seconds: 2)).listen((_) {
       userHttpService.profile().then((response) {
