@@ -1,12 +1,14 @@
 import 'dart:async';
 
-import 'package:comminq/utils/constants.dart';
-import 'package:comminq/views/auth/login/login_view.dart';
-import 'package:comminq/views/auth/register/register_view.dart';
-import 'package:comminq/views/home/home_view.dart';
-import 'package:comminq/views/startup/splash_screen_view.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
+
+import '../utils/constants.dart';
+import '../views/auth/login/login_view.dart';
+import '../views/auth/register/register_view.dart';
+import '../views/auth/verification_email/verification_email_view.dart';
+import '../views/home/home_view.dart';
+import '../views/startup/splash_screen_view.dart';
 
 class MyApp extends StatefulWidget {
   const MyApp({Key? key}) : super(key: key);
@@ -60,6 +62,7 @@ class _MyAppState extends State<MyApp> {
             Routes.home: (context) => const HomeView(),
             Routes.login: (context) => const LoginView(),
             Routes.register: (context) => const RegisterView(),
+            Routes.verifiedEmailView: (context) => VerificationEmailView(),
           },
           builder: (BuildContext context, Widget? child) {
             return Scaffold(

@@ -49,30 +49,32 @@ class _GoogleButtonState extends State<GoogleButton> {
         final TokenManager tokenManager = TokenManager();
 
         try {
-          final response =
-              await userHttpService.googleLogin(googleKey.accessToken!);
+          if (mounted) {
+            final response = await userHttpService
+                .googleLogin(googleKey.accessToken!);
 
-          if (response.statusCode == 200) {
-            final Map<String, dynamic> result =
-                extractFromResponse(response.data);
-            final String token = result['token'];
+            if (response.statusCode == 200) {
+              final Map<String, dynamic> result =
+                  extractFromResponse(response.data);
+              final String token = result['token'];
 
-            if (token.isNotEmpty) {
-              try {
-                await tokenManager.saveToken(token);
-                if (mounted) {
-                  navigateToRoute(context, Routes.home);
+              if (token.isNotEmpty) {
+                try {
+                  await tokenManager.saveToken(token);
+                  if (mounted) {
+                    navigateToRoute(context, Routes.home);
+                  }
+                } catch (error) {
+                  debugPrint('Error writing token to secure storage: $error');
                 }
-              } catch (error) {
-                debugPrint('Error writing token to secure storage: $error');
+              } else {
+                // Handle missing token error
+                debugPrint('Token not found in the response');
               }
             } else {
-              // Handle missing token error
-              debugPrint('Token not found in the response');
+              debugPrint(
+                  'Login with Google failed with status code ${response.statusCode}');
             }
-          } else {
-            debugPrint(
-                'Login with Google failed with status code ${response.statusCode}');
           }
         } catch (error) {
           final errorMessage = error.toString();

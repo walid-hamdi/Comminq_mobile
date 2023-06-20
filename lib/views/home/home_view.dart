@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import "package:sentry_flutter/sentry_flutter.dart";
 
 import '../../environment.dart';
 import '../../models/user_profile.dart';
 import '../../services/internet_connectivity.dart';
 import '../../services/user_service.dart';
 import '../../utils/constants.dart';
+// import '../../utils/dialog_utils.dart';
 import '../../utils/helpers.dart';
 import '../../utils/secure_storage.dart';
 import '../../widgets/common/custom_avatar.dart';
@@ -118,7 +120,10 @@ class _HomeViewState extends State<HomeView> {
     });
 
     userHttpService.profile().then((response) {
-      final profile = response;
+      debugPrint("Response $response");
+      final userProfileData = response.data;
+      final profile = ResponseProfile.fromJson(userProfileData!);
+
       final profileUsername = profile.name;
       final profileEmail = profile.email;
       final profilePicture = profile.picture;
@@ -136,13 +141,23 @@ class _HomeViewState extends State<HomeView> {
         _userProfile = userProfile;
       });
     }).catchError((error) {
+      final errorData = error.response?.data;
+      final email = errorData["email"];
+      final errorMessage =
+          errorData != null ? errorData['error'] : 'Unknown error occurred';
+      // Handle the specific error message
+      var isNotVerifiedErrorMessage =
+          errorMessage == 'Email is not verified. Please verify your email.';
+
+      if (isNotVerifiedErrorMessage) {
+        pushToRoute(
+          context,
+          Routes.verifiedEmailView,
+          arguments: email,
+        );
+      }
+      Sentry.captureException(errorMessage);
       return;
-      // final String errorMessage = error.response.toString();
-      // showErrorDialog(
-      //   context: context,
-      //   title: "Retrieve Profile Error",
-      //   content: errorMessage,
-      // );
     }).whenComplete(() {
       setState(() {
         isLoading = false;

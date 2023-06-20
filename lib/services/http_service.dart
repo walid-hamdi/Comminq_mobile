@@ -1,14 +1,15 @@
 import 'dart:io';
 
-import 'package:comminq/services/user_service.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 
+// import '../utils/constants.dart';
+// import '../utils/helpers.dart';
 import '../utils/secure_storage.dart';
+// import 'user_service.dart';
 
 class ApiInterceptors extends Interceptor {
   final TokenManager _tokenManager;
-
   ApiInterceptors() : _tokenManager = TokenManager();
 
   @override
@@ -23,6 +24,8 @@ class ApiInterceptors extends Interceptor {
 
     super.onRequest(options, handler);
   }
+
+
 }
 
 class HttpService<TProfile, TAuth> {
@@ -33,20 +36,9 @@ class HttpService<TProfile, TAuth> {
     _client.interceptors.add(ApiInterceptors());
   }
 
-  Future<ResponseProfile> profile() async {
-    // try {
-    final response =
-        await _client.get<Map<String, dynamic>>('$endpoint/profile');
-
-    final userProfileData = response.data;
-    final userProfile = ResponseProfile.fromJson(userProfileData!);
-
-    return userProfile;
+  Future<Response<dynamic>> profile() async {
+    return await _client.get<dynamic>('$endpoint/profile');
   }
-
-  // Future<Response<dynamic>> updateProfile(String? id, dynamic data) async {
-  //   return await _client.patch<dynamic>('$endpoint/$id', data: data);
-  // }
 
   Future<Response<dynamic>> updateProfile(String? id, dynamic data,
       {File? profilePicture}) async {
@@ -87,6 +79,11 @@ class HttpService<TProfile, TAuth> {
 
   Future<Response> logout() {
     return _client.get('$endpoint/logout');
+  }
+
+  Future<Response<dynamic>> resendVerificationEmail(String email) async {
+    final data = {'email': email};
+    return await _client.post<dynamic>('$endpoint/resend-verification-email', data: data);
   }
 
   // Factory method to create an instance of HttpService
