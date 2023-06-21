@@ -95,10 +95,23 @@ class HttpService<TProfile, TAuth> {
     return await _client.post<dynamic>('$endpoint/verify-code', data: data);
   }
 
- Future<Response<dynamic>> changePasswordByCode(
+  Future<Response<dynamic>> changePasswordByCode(
       String code, String newPassword) async {
     final data = {'code': code, 'newPassword': newPassword};
     return await _client.post<dynamic>('$endpoint/password/reset', data: data);
+  }
+
+  Future<Response<dynamic>> changePassword(
+      String? id, String currentPassword, String newPassword) async {
+    final data = {
+      'currentPassword': currentPassword,
+      'newPassword': newPassword,
+    };
+
+    return await _client.put<dynamic>(
+      '$endpoint/$id/password',
+      data: data,
+    );
   }
 
   // Factory method to create an instance of HttpService

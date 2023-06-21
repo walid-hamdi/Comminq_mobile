@@ -1,17 +1,19 @@
 import 'package:flutter/material.dart';
 
 class CustomTextField extends StatefulWidget {
-  final TextEditingController controller;
+  final TextEditingController? controller;
   final String labelText;
   final bool obscureText;
   final TextInputType keyboardType;
   final String? Function(String?)? validator;
+  final Function(String?)? onChanged;
   final bool showSuffixIcon;
 
   const CustomTextField({
     Key? key,
-    required this.controller,
+    this.controller,
     required this.labelText,
+    this.onChanged,
     this.obscureText = false,
     this.keyboardType = TextInputType.text,
     this.validator,
@@ -30,6 +32,7 @@ class _CustomTextFieldState extends State<CustomTextField> {
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 8.0),
       child: TextFormField(
+        onChanged: widget.onChanged,
         controller: widget.controller,
         obscureText: widget.obscureText && _obscureText,
         keyboardType: widget.keyboardType,

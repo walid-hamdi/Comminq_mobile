@@ -27,6 +27,7 @@ class ResponseProfile {
   }
 }
 
-const String endpoint = Environment.endPoint;
+final String endpoint = Environment.endPoint ?? "";
+// const String endpoint = Environment.endPoint;
 final userHttpService =
     HttpService.create<ResponseProfile, String>("${endpoint}api/user");

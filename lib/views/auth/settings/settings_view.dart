@@ -35,6 +35,7 @@ class _SettingsViewState extends State<SettingsView> {
   late TextEditingController _usernameController;
   late TextEditingController _emailController;
   bool isLoading = false;
+  bool _isChangingPassword = false;
   final ImagePicker _picker = ImagePicker();
   File? _pickedImage;
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
@@ -55,7 +56,6 @@ class _SettingsViewState extends State<SettingsView> {
   }
 
   void _updateProfile() {
-    // check the internet here
     // check the internet here
     InternetConnectivity.checkConnectivity(context).then((isConnected) {
       if (isConnected) {
@@ -154,6 +154,112 @@ class _SettingsViewState extends State<SettingsView> {
     }
   }
 
+  void _showChangePasswordDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        String currentPassword = '';
+        String newPassword = '';
+
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter setState) {
+            return AlertDialog(
+              title: const Text('Change Password'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  CustomTextField(
+                    onChanged: (value) {
+                      setState(() {
+                        currentPassword = value!;
+                      });
+                    },
+                    obscureText: true,
+                    labelText: 'Current Password',
+                  ),
+                  const SizedBox(height: 16),
+                  CustomTextField(
+                    onChanged: (value) {
+                      newPassword = value!;
+                    },
+                    obscureText: true,
+                    labelText: 'New Password',
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop(); // Close the dialog
+                  },
+                  child: const Text('Cancel'),
+                ),
+                AuthButton(
+                  isLoading: _isChangingPassword,
+                  label: 'Change',
+                  onPressed: _isChangingPassword
+                      ? null
+                      : () {
+                          if (currentPassword.isEmpty || newPassword.isEmpty) {
+                            showErrorDialog(
+                              context: context,
+                              title: "Error",
+                              content: "Please enter both passwords",
+                            );
+                            return;
+                          }
+
+                          InternetConnectivity.checkConnectivity(context)
+                              .then((isConnected) {
+                            if (isConnected) {
+                              setState(() {
+                                _isChangingPassword = true;
+                              });
+                              _changePassword(currentPassword, newPassword)
+                                  .whenComplete(() {
+                                setState(() {
+                                  _isChangingPassword = false;
+                                });
+                              });
+                            }
+                          });
+                        },
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Future<void> _changePassword(String currentPassword, String newPassword) {
+    return userHttpService
+        .changePassword(widget.userProfile.id, currentPassword, newPassword)
+        .then((response) {
+      final message = response.data['message'];
+
+      Navigator.of(context).pop(); // Dismiss the dialog
+
+      showErrorDialog(
+        context: context,
+        title: "Password Changed",
+        content: message,
+      );
+    }).catchError((error) {
+      final errorData = error.response?.data;
+      final errorMessage =
+          errorData != null ? errorData['error'] : 'Unknown error occurred';
+      // Handle the specific error message
+      showErrorDialog(
+        context: context,
+        title: "Change Password Error",
+        content: errorMessage,
+      );
+      Sentry.captureException(errorMessage);
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final String? profilePicture =
@@ -247,6 +353,12 @@ class _SettingsViewState extends State<SettingsView> {
                     labelText: 'Email',
                     showSuffixIcon: false,
                   ),
+                  const SizedBox(height: 16),
+                  AuthButton(
+                      isLoading: false,
+                      label: 'Change Password',
+                      onPressed: _showChangePasswordDialog,
+                      backgroundColor: Colors.yellow.shade900),
                   const SizedBox(height: 16),
                   AuthButton(
                     isLoading: isLoading,
