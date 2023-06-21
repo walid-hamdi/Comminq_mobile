@@ -55,3 +55,6 @@ android/app/production.keystore
 info.text
 
 # .vscode
+
+
+.env
