@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:sentry_flutter/sentry_flutter.dart';
 
 import '../../../models/user_profile.dart';
+import '../../services/internet_connectivity.dart';
+import '../../services/user_service.dart';
+import '../../utils/dialog_utils.dart';
 import '../../utils/helpers.dart';
 import '../common/custom_avatar.dart';
 
@@ -19,6 +23,56 @@ class DrawerWidget extends StatelessWidget {
     this.onSettingsPressed,
     this.onLogoutPressed,
   }) : super(key: key);
+
+  void showDeleteAccountConfirmationDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Delete Account'),
+          content: const Text('Are you sure you want to delete your account?'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); // Close the dialog
+              },
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                InternetConnectivity.checkConnectivity(context)
+                    .then((isConnected) {
+                  if (isConnected) {
+                    _deleteAccount(context);
+                  }
+                });
+                Navigator.of(context).pop(); // Close the dialog
+              },
+              child: const Text('Delete'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _deleteAccount(context) {
+    userHttpService.deleteProfile(userProfile?.id).then((response) {
+      onLogoutPressed!();
+    }).catchError((error) {
+      final errorData = error.response?.data;
+      final errorMessage =
+          errorData != null ? errorData['error'] : 'Unknown error occurred';
+
+      showErrorDialog(
+        context: context,
+        title: "Delete Account Error",
+        content: errorMessage,
+      );
+
+      Sentry.captureException(errorMessage);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -101,6 +155,13 @@ class DrawerWidget extends StatelessWidget {
               leading: const Icon(Icons.settings),
               title: const Text('Settings'),
               onTap: onSettingsPressed,
+            ),
+            ListTile(
+              leading: const Icon(Icons.warning),
+              title: const Text('Delete Account'),
+              onTap: () {
+                showDeleteAccountConfirmationDialog(context);
+              },
             ),
             ListTile(
               leading: const Icon(Icons.logout),

@@ -114,6 +114,10 @@ class HttpService<TProfile, TAuth> {
     );
   }
 
+  Future<Response<dynamic>> deleteProfile(String? id) async {
+    return await _client.delete<dynamic>('$endpoint/$id');
+  }
+
   // Factory method to create an instance of HttpService
   static HttpService<TProfile, TAuth> create<TProfile, TAuth>(String endpoint) {
     return HttpService<TProfile, TAuth>(endpoint);

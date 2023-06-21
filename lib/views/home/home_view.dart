@@ -155,6 +155,8 @@ class _HomeViewState extends State<HomeView> {
           Routes.verifiedEmail,
           arguments: email,
         );
+      } else {
+        _logout(context);
       }
       Sentry.captureException(errorMessage);
       return;
