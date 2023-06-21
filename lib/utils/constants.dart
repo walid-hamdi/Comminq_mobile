@@ -5,6 +5,7 @@ class Routes {
   static const String register = "/register";
   static const String profile = "/profile";
   static const String settings = "/settings";
-  static const String verifiedEmailView = "/verifiedEmailView";
+  static const String verifiedEmail = "/verifiedEmail";
+  static const String resetPassword = "/resetPassword";
 
 }

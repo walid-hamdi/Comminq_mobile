@@ -152,7 +152,7 @@ class _HomeViewState extends State<HomeView> {
       if (isNotVerifiedErrorMessage) {
         pushToRoute(
           context,
-          Routes.verifiedEmailView,
+          Routes.verifiedEmail,
           arguments: email,
         );
       }

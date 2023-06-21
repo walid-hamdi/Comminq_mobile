@@ -24,8 +24,6 @@ class ApiInterceptors extends Interceptor {
 
     super.onRequest(options, handler);
   }
-
-
 }
 
 class HttpService<TProfile, TAuth> {
@@ -83,7 +81,24 @@ class HttpService<TProfile, TAuth> {
 
   Future<Response<dynamic>> resendVerificationEmail(String email) async {
     final data = {'email': email};
-    return await _client.post<dynamic>('$endpoint/resend-verification-email', data: data);
+    return await _client.post<dynamic>('$endpoint/resend-verification-email',
+        data: data);
+  }
+
+  Future<Response<dynamic>> forgotPassword(String email) async {
+    final data = {'email': email};
+    return await _client.post<dynamic>('$endpoint/forgot-password', data: data);
+  }
+
+  Future<Response<dynamic>> verifyCode(String email, String code) async {
+    final data = {'email': email, 'code': code};
+    return await _client.post<dynamic>('$endpoint/verify-code', data: data);
+  }
+
+ Future<Response<dynamic>> changePasswordByCode(
+      String code, String newPassword) async {
+    final data = {'code': code, 'newPassword': newPassword};
+    return await _client.post<dynamic>('$endpoint/password/reset', data: data);
   }
 
   // Factory method to create an instance of HttpService

@@ -73,6 +73,8 @@ class _VerificationEmailViewState extends State<VerificationEmailView> {
     });
   }
 
+// todo: When the screen of email verification on pause and on reload check about the profile api
+
   @override
   void initState() {
     super.initState();
@@ -90,7 +92,7 @@ class _VerificationEmailViewState extends State<VerificationEmailView> {
   }
 
   void _listenToProfile() {
-    // TODO: it should have solution to reduce the loading times to the server
+    // todo: it should have solution to reduce the loading times to the server
     _profileSubscription =
         Stream.periodic(const Duration(seconds: 2)).listen((_) {
       userHttpService.profile().then((response) {

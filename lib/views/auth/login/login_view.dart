@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 
-import 'package:comminq/utils/constants.dart';
-import 'package:comminq/utils/helpers.dart';
-import 'package:comminq/utils/secure_storage.dart';
+import '../../../utils/constants.dart';
+import '../../../utils/helpers.dart';
+import '../../../utils/secure_storage.dart';
 import '../../../services/internet_connectivity.dart';
 import '../../../services/user_service.dart';
 import '../../../utils/dialog_utils.dart';
@@ -169,8 +169,8 @@ class _LoginViewState extends State<LoginView> {
                     const SizedBox(height: 16),
                     !isLoading
                         ? TextButton(
-                            onPressed: () {
-                              // Handle forgot password
+                            onPressed: () => {
+                              navigateToRoute(context, Routes.resetPassword)
                             },
                             child: Text(
                               'Forgot password?',

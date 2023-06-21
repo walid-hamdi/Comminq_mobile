@@ -1,7 +1,8 @@
-// import 'dart:io';
+import 'dart:io';
 
 class Environment {
-  static const endPoint = String.fromEnvironment('ENDPOINT');
-  static const clientId = String.fromEnvironment('CLIENT_ID');
-  static const sentryDsn = String.fromEnvironment('SENTRY_DSN');
+  // todo: replace this with default value and remove commit history
+  static final endPoint = Platform.environment['ENDPOINT'];
+  static final clientId = Platform.environment['CLIENT_ID'];
+  static final sentryDsn = Platform.environment['SENTRY_DSN'];
 }

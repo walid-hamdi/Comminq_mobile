@@ -7,6 +7,7 @@ import '../utils/constants.dart';
 import '../views/auth/login/login_view.dart';
 import '../views/auth/register/register_view.dart';
 import '../views/auth/verification_email/verification_email_view.dart';
+import '../views/auth/reset_password/reset_password_view.dart';
 import '../views/home/home_view.dart';
 import '../views/startup/splash_screen_view.dart';
 
@@ -62,7 +63,8 @@ class _MyAppState extends State<MyApp> {
             Routes.home: (context) => const HomeView(),
             Routes.login: (context) => const LoginView(),
             Routes.register: (context) => const RegisterView(),
-            Routes.verifiedEmailView: (context) => VerificationEmailView(),
+            Routes.verifiedEmail: (context) => const VerificationEmailView(),
+            Routes.resetPassword: (context) => const ResetPasswordView(),
           },
           builder: (BuildContext context, Widget? child) {
             return Scaffold(
