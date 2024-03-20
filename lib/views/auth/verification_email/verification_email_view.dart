@@ -1,8 +1,8 @@
-import 'dart:async';
-
-import 'package:dio/dio.dart';
+import 'package:comminq/widgets/common/loading_indicator.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../services/internet_connectivity.dart';
@@ -20,101 +20,30 @@ class VerificationEmailView extends StatefulWidget {
 }
 
 class _VerificationEmailViewState extends State<VerificationEmailView> {
-  final _secureStorage = TokenManager();
-  StreamSubscription? _profileSubscription;
-
-  void _resendVerificationEmail(context, email) {
-    InternetConnectivity.checkConnectivity(context).then((isConnected) {
-      if (isConnected) {
-        _performResendVerificationEmail(context, email);
-      }
-    });
-  }
-
-  void _performResendVerificationEmail(context, email) {
-    userHttpService.resendVerificationEmail(email).then((response) {
-      final responseData = response.data;
-      final successMessage = responseData['message'];
-
-      showErrorDialog(
-        context: context,
-        title: "Resent Verification",
-        content: successMessage,
-      );
-    }).catchError((error) {
-      String errorMessage = 'An error occurred. Please try again later.';
-
-      if (error is DioError) {
-        final response = error.response;
-        if (response != null &&
-            response.data != null &&
-            response.data['message'] != null) {
-          errorMessage = response.data['message'];
-        }
-      }
-      showErrorDialog(
-        context: context,
-        title: "Resent Verification Email Error",
-        content: "$errorMessage. Please Check Your Email!",
-      );
-    });
-  }
-
-  void _openMail() {
-    const String mailToUrl = 'mailto:';
-    launchUrl(Uri.parse(mailToUrl));
-  }
-
-  void _logout(context) {
-    _secureStorage.deleteToken().then((_) {
-      navigateToRoute(context, Routes.login);
-    }).catchError((error) {
-      debugPrint('Error deleting token from secure storage: $error');
-    });
-  }
-
-// todo: When the screen of email verification on pause and on reload check about the profile api
+  bool _isLoading = false;
 
   @override
   void initState() {
     super.initState();
-    InternetConnectivity.checkConnectivity(context).then((isConnected) {
-      if (isConnected) {
-        _listenToProfile();
-      }
-    });
+
+    _refresh();
   }
 
   @override
   void dispose() {
-    _profileSubscription!.cancel();
     super.dispose();
-  }
-
-  void _listenToProfile() {
-    // todo: it should have solution to reduce the loading times to the server
-    _profileSubscription =
-        Stream.periodic(const Duration(seconds: 2)).listen((_) {
-      userHttpService.profile().then((response) {
-        final responseData = response.data;
-        final isVerified = responseData['isVerified'];
-        if (isVerified == true) {
-          navigateToRoute(context, Routes.home);
-        }
-      }).catchError((error) {
-        // Handle error
-      });
-    });
   }
 
   @override
   Widget build(BuildContext context) {
-    final email = ModalRoute.of(context)?.settings.arguments as String;
+    final arguments =
+        ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>;
+    final email = arguments['email'] as String;
 
     SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
       statusBarColor: Colors.white,
-      statusBarIconBrightness: Brightness.dark, // For Android (dark icons)
-      statusBarBrightness: Brightness.light, // For iOS (dark icons)
+      statusBarIconBrightness: Brightness.dark,
+      statusBarBrightness: Brightness.light,
     ));
 
     return Scaffold(
@@ -134,43 +63,80 @@ class _VerificationEmailViewState extends State<VerificationEmailView> {
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                const SizedBox(height: 16),
-                ElevatedButton(
-                  onPressed: _openMail,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.orange,
-                    padding: const EdgeInsets.symmetric(vertical: 16.0),
-                  ),
-                  child: const Text(
-                    'Check Your Mail',
-                    style: TextStyle(fontSize: 16.0),
-                  ),
-                ),
-                const SizedBox(height: 24),
-                ElevatedButton(
-                  onPressed: () => _resendVerificationEmail(
-                    context,
-                    email,
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blue,
-                    padding: const EdgeInsets.symmetric(vertical: 16.0),
-                  ),
-                  child: const Text(
-                    'Resend Verification Email',
-                    style: TextStyle(fontSize: 16.0),
+                const SizedBox(height: 18),
+                SizedBox(
+                  height: 45,
+                  child: ElevatedButton(
+                    onPressed: _isLoading ? null : _openMail,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.orange,
+                    ),
+                    child: const Text(
+                      'Check your email inbox',
+                      style: TextStyle(
+                        fontSize: 16.0,
+                        color: Colors.white,
+                      ),
+                    ),
                   ),
                 ),
-                const SizedBox(height: 16),
-                ElevatedButton(
-                  onPressed: () => _logout(context),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.red,
-                    padding: const EdgeInsets.symmetric(vertical: 16.0),
+                const SizedBox(height: 18),
+                SizedBox(
+                  height: 45,
+                  child: ElevatedButton(
+                    onPressed: _isLoading
+                        ? null
+                        : () => _resendVerificationEmail(email),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blue,
+                    ),
+                    child: !_isLoading
+                        ? const Text(
+                            'Resend verification email',
+                            style: TextStyle(
+                              fontSize: 16.0,
+                              color: Colors.white,
+                            ),
+                          )
+                        : const LoadingIndicator(),
                   ),
-                  child: const Text(
-                    'Logout',
-                    style: TextStyle(fontSize: 16.0),
+                ),
+                const SizedBox(height: 18),
+                SizedBox(
+                  height: 45,
+                  child: ElevatedButton(
+                    onPressed: _isLoading ? null : _refresh,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.black12,
+                    ),
+                    child: !_isLoading
+                        ? const Text(
+                            'Refresh',
+                            style: TextStyle(
+                              fontSize: 16.0,
+                              color: Colors.white,
+                            ),
+                          )
+                        : const LoadingIndicator(),
+                  ),
+                ),
+                const SizedBox(height: 18),
+                SizedBox(
+                  height: 45,
+                  child: ElevatedButton(
+                    onPressed: _isLoading ? null : _logout,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.red,
+                    ),
+                    child: !_isLoading
+                        ? const Text(
+                            'Logout',
+                            style: TextStyle(
+                              fontSize: 16.0,
+                              color: Colors.white,
+                            ),
+                          )
+                        : const LoadingIndicator(),
                   ),
                 ),
               ],
@@ -179,5 +145,110 @@ class _VerificationEmailViewState extends State<VerificationEmailView> {
         ),
       ),
     );
+  }
+
+  void _refresh() {
+    InternetConnectivity.checkConnectivity(context).then((isConnected) {
+      if (isConnected) {
+        setState(() {
+          _isLoading = true;
+        });
+        userHttpService.profile().then((response) {
+          if (response.statusCode == 200) {
+            if (response.data['isVerified'] == true) {
+              navigateToRoute(context, Routes.home);
+            }
+          }
+        }).catchError((error) {
+          if (error.response.data['error'] ==
+              'Email is not verified. Please verify your email.') {
+            _resendVerificationEmail(error.response.data['email']);
+          }
+        }).whenComplete(() {
+          setState(() {
+            _isLoading = false;
+          });
+        });
+      }
+    });
+  }
+
+  void _openMail() async {
+    const String mailToUrl = 'https://mail.google.com/mail/u/0/#inbox';
+    try {
+      setState(() {
+        _isLoading = true;
+      });
+      await launchUrl(
+        Uri.parse(
+          mailToUrl,
+        ),
+      );
+    } catch (error, stackTracer) {
+      Sentry.captureException(error, stackTrace: stackTracer);
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  void _resendVerificationEmail(email) {
+    InternetConnectivity.checkConnectivity(context).then((isConnected) async {
+      if (isConnected) {
+        setState(() {
+          _isLoading = true;
+        });
+        userHttpService
+            .resendVerificationEmail({'email': email}).then((response) {
+          if (response.statusCode == 200) {
+            if (response.data['message'] ==
+                'Verification email resent successfully') {
+              showErrorDialog(
+                context: context,
+                title: "Verification Email Sent",
+                content:
+                    "A verification link has been sent to your email inbox. Please check your email to complete the verification process.",
+              );
+            }
+          }
+        }).catchError((error, stackTrace) {
+          showErrorDialog(
+            context: context,
+            title: "Error send verification link.",
+            content: error.response.data['error'],
+          );
+          Sentry.captureException(error, stackTrace: stackTrace);
+        }).whenComplete(() {
+          setState(() {
+            _isLoading = false;
+          });
+        });
+      }
+    });
+  }
+
+  void _logout() {
+    try {
+      InternetConnectivity.checkConnectivity(context).then((isConnected) async {
+        if (isConnected) {
+          final secureStorage = TokenManager();
+          setState(() {
+            _isLoading = true;
+          });
+          await GoogleSignIn().signOut();
+          await secureStorage.deleteToken();
+          if (mounted) {
+            navigateToRoute(context, Routes.login);
+          }
+        }
+      });
+    } catch (error, stackTrace) {
+      Sentry.captureException(error, stackTrace: stackTrace);
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
   }
 }

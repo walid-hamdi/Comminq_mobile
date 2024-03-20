@@ -3,13 +3,11 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 
 class CustomAvatar extends StatelessWidget {
-  final String? profilePicture;
-  final bool? hasProfilePicture;
+  final String profilePicture;
 
   const CustomAvatar({
     Key? key,
     required this.profilePicture,
-    required this.hasProfilePicture,
   }) : super(key: key);
 
   @override
@@ -19,21 +17,21 @@ class CustomAvatar extends StatelessWidget {
         color: Colors.white,
         width: 50,
         height: 50,
-        child: hasProfilePicture!
-            ? profilePicture!.startsWith('http')
-                ? Image.network(
-                    profilePicture!,
-                    fit: BoxFit.cover,
-                  )
-                : Image.file(
-                    File(profilePicture!),
-                    fit: BoxFit.cover,
-                  )
-            : const Icon(
+        child: profilePicture.isEmpty
+            ? const Icon(
                 Icons.person_add_alt_1,
                 size: 30,
                 color: Colors.grey,
-              ),
+              )
+            : profilePicture.startsWith('http')
+                ? Image.network(
+                    profilePicture,
+                    fit: BoxFit.cover,
+                  )
+                : Image.file(
+                    File(profilePicture),
+                    fit: BoxFit.cover,
+                  ),
       ),
     );
   }

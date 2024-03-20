@@ -60,35 +60,35 @@ class _ResetPasswordViewState extends State<ResetPasswordView> {
     setState(() {
       isLoading = true;
     });
-    userHttpService.forgotPassword(email).then((response) {
-      // final message = response.data['message'];
+    // userHttpService.forgotPassword(email).then((response) {
+    // final message = response.data['message'];
 
-      // showErrorDialog(
-      //   context: context,
-      //   title: "Reset Password",
-      //   content: message,
-      // );
+    // showErrorDialog(
+    //   context: context,
+    //   title: "Reset Password",
+    //   content: message,
+    // );
 
-      setState(() {
-        showCodeField = true;
-      });
-    }).catchError((error) {
-      final errorData = error.response?.data;
-      final errorMessage =
-          errorData != null ? errorData['error'] : 'Unknown error occurred';
+    //   setState(() {
+    //     showCodeField = true;
+    //   });
+    // }).catchError((error) {
+    //   final errorData = error.response?.data;
+    //   final errorMessage =
+    //       errorData != null ? errorData['error'] : 'Unknown error occurred';
 
-      showErrorDialog(
-        context: context,
-        title: "Sent reset code error",
-        content: errorMessage,
-      );
+    //   showErrorDialog(
+    //     context: context,
+    //     title: "Sent reset code error",
+    //     content: errorMessage,
+    //   );
 
-      Sentry.captureException(errorMessage);
-    }).whenComplete(() {
-      setState(() {
-        isLoading = false;
-      });
-    });
+    //   Sentry.captureException(errorMessage);
+    // }).whenComplete(() {
+    //   setState(() {
+    //     isLoading = false;
+    //   });
+    // });
   }
 
   void _validateCode(String code) {
@@ -97,27 +97,27 @@ class _ResetPasswordViewState extends State<ResetPasswordView> {
     setState(() {
       isLoading = true;
     });
-    userHttpService.verifyCode(email, code).then((response) {
-      setState(() {
-        showPasswordField = true;
-      });
-    }).catchError((error) {
-      final errorData = error.response?.data;
-      final errorMessage =
-          errorData != null ? errorData['error'] : 'Unknown error occurred';
+    // userHttpService.verifyCode(email, code).then((response) {
+    //   setState(() {
+    //     showPasswordField = true;
+    //   });
+    // }).catchError((error) {
+    //   final errorData = error.response?.data;
+    //   final errorMessage =
+    //       errorData != null ? errorData['error'] : 'Unknown error occurred';
 
-      showErrorDialog(
-        context: context,
-        title: "Verify Code Error",
-        content: errorMessage,
-      );
+    //   showErrorDialog(
+    //     context: context,
+    //     title: "Verify Code Error",
+    //     content: errorMessage,
+    //   );
 
-      Sentry.captureException(errorMessage);
-    }).whenComplete(() {
-      setState(() {
-        isLoading = false;
-      });
-    });
+    //   Sentry.captureException(errorMessage);
+    // }).whenComplete(() {
+    //   setState(() {
+    //     isLoading = false;
+    //   });
+    // });
   }
 
   void _changePassword(String newPassword) {

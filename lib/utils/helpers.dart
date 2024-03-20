@@ -2,8 +2,12 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 
-void navigateToRoute(BuildContext context, String routeName) {
-  Navigator.of(context).pushReplacementNamed(routeName);
+void navigateToRoute(
+  BuildContext context,
+  String routeName, {
+  Map<String, dynamic>? arguments,
+}) {
+  Navigator.of(context).pushReplacementNamed(routeName, arguments: arguments);
 }
 
 void pushToRoute(BuildContext context, String routeName, {Object? arguments}) {
@@ -27,5 +31,3 @@ void hideKeyboard(BuildContext context) {
     currentFocus.unfocus();
   }
 }
-
-

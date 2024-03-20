@@ -27,6 +27,7 @@ class _SplashScreenViewState extends State<SplashScreenView> {
           navigateToRoute(context, Routes.home);
         } else {
           navigateToRoute(context, Routes.login);
+          
         }
       });
     });
