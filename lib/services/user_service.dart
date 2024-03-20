@@ -22,6 +22,14 @@ class UserHttpService {
     return _client.post('$endpoint/resend-verification-email', data: data);
   }
 
+  Future<Response<dynamic>> changePassword(
+      String? id, Map<String, dynamic> data) async {
+    return await _client.put(
+      '$endpoint/$id/password',
+      data: data,
+    );
+  }
+
   Future<Response<dynamic>> updateProfile(String? id, Map<String, dynamic> data,
       {File? profilePicture}) async {
     FormData formData = FormData.fromMap(data);
@@ -41,18 +49,17 @@ class UserHttpService {
     );
   }
 
-  Future<Response<dynamic>> changePasswordByCode(
-      String code, String newPassword) async {
-    final data = {'code': code, 'newPassword': newPassword};
-    return await _client.post<dynamic>('$endpoint/password/reset', data: data);
+  Future<Response<dynamic>> forgotPassword(Map<String, dynamic> data) async {
+    return await _client.post('$endpoint/forgot-password', data: data);
   }
 
-  Future<Response<dynamic>> changePassword(
-      String? id, Map<String, dynamic> data) async {
-    return await _client.put(
-      '$endpoint/$id/password',
-      data: data,
-    );
+  Future<Response<dynamic>> verifyCode(Map<String, dynamic> data) async {
+    return await _client.post('$endpoint/verify-code', data: data);
+  }
+
+  Future<Response<dynamic>> changePasswordByCode(
+      Map<String, dynamic> data) async {
+    return await _client.post('$endpoint/password/reset', data: data);
   }
 
   Future<Response<dynamic>> deleteProfile(String? id) async {

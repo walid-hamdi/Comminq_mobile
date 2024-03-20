@@ -1,4 +1,5 @@
 import 'package:comminq/services/user_service.dart';
+import 'package:comminq/utils/email_validator.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
@@ -24,148 +25,16 @@ class _ResetPasswordViewState extends State<ResetPasswordView> {
   final TextEditingController _codeController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
-  bool isLoading = false;
+  bool _isLoading = false;
   bool showCodeField = false;
   bool showPasswordField = false;
-
-  void _submitForm() {
-    if (_formKey.currentState!.validate()) {
-      String email = _emailController.text;
-      String code = _codeController.text;
-      String newPassword = _passwordController.text;
-
-      if (!showCodeField) {
-        InternetConnectivity.checkConnectivity(context).then((isConnected) {
-          if (isConnected) {
-            _sendResetCode(email);
-          }
-        });
-      } else if (!showPasswordField) {
-        InternetConnectivity.checkConnectivity(context).then((isConnected) {
-          if (isConnected) {
-            _validateCode(code);
-          }
-        });
-      } else {
-        InternetConnectivity.checkConnectivity(context).then((isConnected) {
-          if (isConnected) {
-            _changePassword(newPassword);
-          }
-        });
-      }
-    }
-  }
-
-  void _sendResetCode(String email) {
-    setState(() {
-      isLoading = true;
-    });
-    // userHttpService.forgotPassword(email).then((response) {
-    // final message = response.data['message'];
-
-    // showErrorDialog(
-    //   context: context,
-    //   title: "Reset Password",
-    //   content: message,
-    // );
-
-    //   setState(() {
-    //     showCodeField = true;
-    //   });
-    // }).catchError((error) {
-    //   final errorData = error.response?.data;
-    //   final errorMessage =
-    //       errorData != null ? errorData['error'] : 'Unknown error occurred';
-
-    //   showErrorDialog(
-    //     context: context,
-    //     title: "Sent reset code error",
-    //     content: errorMessage,
-    //   );
-
-    //   Sentry.captureException(errorMessage);
-    // }).whenComplete(() {
-    //   setState(() {
-    //     isLoading = false;
-    //   });
-    // });
-  }
-
-  void _validateCode(String code) {
-    String email = _emailController.text;
-
-    setState(() {
-      isLoading = true;
-    });
-    // userHttpService.verifyCode(email, code).then((response) {
-    //   setState(() {
-    //     showPasswordField = true;
-    //   });
-    // }).catchError((error) {
-    //   final errorData = error.response?.data;
-    //   final errorMessage =
-    //       errorData != null ? errorData['error'] : 'Unknown error occurred';
-
-    //   showErrorDialog(
-    //     context: context,
-    //     title: "Verify Code Error",
-    //     content: errorMessage,
-    //   );
-
-    //   Sentry.captureException(errorMessage);
-    // }).whenComplete(() {
-    //   setState(() {
-    //     isLoading = false;
-    //   });
-    // });
-  }
-
-  void _changePassword(String newPassword) {
-    String code = _codeController.text;
-
-    setState(() {
-      isLoading = true;
-    });
-
-    userHttpService.changePasswordByCode(code, newPassword).then((response) {
-      // Reset the form and hide code and password fields
-      _formKey.currentState!.reset();
-      setState(() {
-        showCodeField = false;
-        showPasswordField = false;
-      });
-
-      // Navigate back to the login screen
-      _goToLogin();
-    }).catchError((error) {
-      final errorData = error.response?.data;
-      final errorMessage =
-          errorData != null ? errorData['error'] : 'Unknown error occurred';
-
-      showErrorDialog(
-        context: context,
-        title: "Change Password Error",
-        content: errorMessage,
-      );
-
-      Sentry.captureException(errorMessage);
-    }).whenComplete(() {
-      setState(() {
-        isLoading = false;
-      });
-    });
-  }
-
-  void _goToLogin() {
-    navigateToRoute(context, Routes.login);
-  }
 
   @override
   Widget build(BuildContext context) {
     SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
       statusBarColor: Colors.white,
-      statusBarIconBrightness: Brightness.dark, // For Android (dark icons)
-      statusBarBrightness: Brightness.light, // For iOS (dark icons)
+      statusBarIconBrightness: Brightness.dark,
+      statusBarBrightness: Brightness.light,
     ));
 
     return GestureDetector(
@@ -180,17 +49,27 @@ class _ResetPasswordViewState extends State<ResetPasswordView> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const SizedBox(height: 60),
+                  const SizedBox(height: 16),
+                  IconButton(
+                    icon: const Icon(Icons.arrow_back),
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                    },
+                  ),
+                  const SizedBox(height: 10),
                   const CustomTitleText(text: '🔒 Reset Password'),
                   const SizedBox(height: 24),
                   if (!showCodeField)
                     CustomTextField(
+                      enable: !_isLoading,
                       controller: _emailController,
                       labelText: 'Email address',
                       keyboardType: TextInputType.emailAddress,
                       validator: (value) {
                         if (value == null || value.isEmpty) {
                           return 'Please enter your email address';
+                        } else if (!isValidEmail(value)) {
+                          return 'Please enter a valid email address';
                         }
                         return null;
                       },
@@ -198,6 +77,7 @@ class _ResetPasswordViewState extends State<ResetPasswordView> {
                     ),
                   if (showCodeField && !showPasswordField) ...[
                     CustomTextField(
+                      enable: !_isLoading,
                       controller: _codeController,
                       labelText: 'Code',
                       keyboardType: TextInputType.text,
@@ -212,6 +92,7 @@ class _ResetPasswordViewState extends State<ResetPasswordView> {
                   ],
                   if (showPasswordField) ...[
                     CustomTextField(
+                      enable: !_isLoading,
                       controller: _passwordController,
                       labelText: 'New Password',
                       obscureText: true,
@@ -225,19 +106,14 @@ class _ResetPasswordViewState extends State<ResetPasswordView> {
                   ],
                   const SizedBox(height: 24),
                   AuthButton(
-                    onPressed: isLoading ? null : _submitForm,
-                    isLoading: isLoading,
+                    onPressed: _isLoading ? null : _submitForm,
+                    isLoading: _isLoading,
                     label: !showCodeField
                         ? 'Send Code'
                         : !showPasswordField
                             ? 'Validate Code'
                             : 'Change Password',
                   ),
-                  const SizedBox(height: 16),
-                  AuthButton(
-                      onPressed: _goToLogin,
-                      isLoading: false,
-                      label: "Back to Login"),
                 ],
               ),
             ),
@@ -245,5 +121,126 @@ class _ResetPasswordViewState extends State<ResetPasswordView> {
         ),
       ),
     );
+  }
+
+  void _submitForm() {
+    if (_formKey.currentState!.validate()) {
+      String email = _emailController.text;
+      String code = _codeController.text;
+      String newPassword = _passwordController.text;
+      setState(() {
+        _isLoading = true;
+      });
+
+      if (!showCodeField) {
+        InternetConnectivity.checkConnectivity(context).then((isConnected) {
+          if (isConnected) {
+            userHttpService.forgotPassword(
+              {"email": email},
+            ).then((response) {
+              if (response.statusCode == 200) {
+                final message = response.data['message'];
+                showErrorDialog(
+                  context: context,
+                  title: "Send reset code",
+                  content: message,
+                );
+
+                setState(() {
+                  showCodeField = true;
+                });
+              }
+            }).catchError((error, stackTracer) {
+              final errorData = error.response?.data;
+              final errorMessage = errorData != null
+                  ? errorData['error']
+                  : 'Unknown error occurred';
+
+              showErrorDialog(
+                context: context,
+                title: "Sent reset code error",
+                content: errorMessage,
+              );
+
+              Sentry.captureException(errorMessage, stackTrace: stackTracer);
+            }).whenComplete(() {
+              setState(() {
+                _isLoading = false;
+              });
+            });
+          }
+        });
+      } else if (!showPasswordField) {
+        InternetConnectivity.checkConnectivity(context).then((isConnected) {
+          if (isConnected) {
+            userHttpService
+                .verifyCode({"email": email, "code": code}).then((response) {
+              final message = response.data['message'];
+              if (response.statusCode == 200) {
+                showErrorDialog(
+                  context: context,
+                  title: "Verify code",
+                  content: message,
+                );
+                setState(() {
+                  showPasswordField = true;
+                });
+              }
+            }).catchError((error, stackTracer) {
+              final errorData = error.response?.data;
+              final errorMessage = errorData != null
+                  ? errorData['error']
+                  : 'Unknown error occurred';
+
+              showErrorDialog(
+                context: context,
+                title: "Verify code error",
+                content: errorMessage,
+              );
+
+              Sentry.captureException(errorMessage, stackTrace: stackTracer);
+            }).whenComplete(() {
+              setState(() {
+                _isLoading = false;
+              });
+            });
+          }
+        });
+      } else {
+        InternetConnectivity.checkConnectivity(context).then((isConnected) {
+          if (isConnected) {
+            userHttpService.changePasswordByCode(
+              {'code': code, 'newPassword': newPassword},
+            ).then((response) {
+              if (response.statusCode == 200) {
+                _formKey.currentState!.reset();
+                setState(() {
+                  showCodeField = false;
+                  showPasswordField = false;
+                });
+                navigateToRoute(context, Routes.login);
+              }
+            }).catchError((error, stackTracer) {
+              final errorData = error.response?.data;
+              final errorMessage = errorData != null
+                  ? errorData['error']
+                  : 'Unknown error occurred';
+
+              showErrorDialog(
+                context: context,
+                title: "Change Password Error",
+                content: errorMessage,
+              );
+
+              Sentry.captureException(errorMessage, stackTrace: stackTracer);
+            }).whenComplete(() {
+              setState(() {
+                _isLoading = false;
+              });
+            });
+          }
+        });
+      }
+    }
   }
 }

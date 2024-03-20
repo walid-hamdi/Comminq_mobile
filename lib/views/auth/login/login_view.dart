@@ -109,8 +109,8 @@ class _LoginViewState extends State<LoginView> {
                     const SizedBox(height: 16),
                     !isLoading
                         ? TextButton(
-                            onPressed: () => {
-                              navigateToRoute(context, Routes.resetPassword)
+                            onPressed: () {
+                              pushToRoute(context, Routes.resetPassword);
                             },
                             child: Text(
                               'Forgot password?',
