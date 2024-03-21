@@ -4,8 +4,6 @@ class Environment {
 //  static final sentryDsn = Platform.environment['SENTRY_DSN'];
 
   static const endPoint = 'https://comminq-backend.onrender.com';
-  // static const clientId =
-  //     '727394150291-iume5lis17683510qa9u2p9kpckmpnd9.apps.googleusercontent.com';
 
   static const clientId =
       '727394150291-o5akph1vb35h4auo4c9ra0h27o2edt28.apps.googleusercontent.com';

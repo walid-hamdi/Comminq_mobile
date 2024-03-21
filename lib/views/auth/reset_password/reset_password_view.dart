@@ -1,9 +1,9 @@
-import 'package:comminq/services/user_service.dart';
-import 'package:comminq/utils/email_validator.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 
+import '../../../services/user_service.dart';
+import '../../../utils/email_validator.dart';
 import '../../../services/internet_connectivity.dart';
 import '../../../utils/constants.dart';
 import '../../../utils/dialog_utils.dart';

@@ -1,14 +1,14 @@
 import 'dart:io';
 
-import "package:comminq/utils/email_validator.dart";
-import "package:comminq/utils/secure_storage.dart";
-import "package:comminq/widgets/common/loading_indicator.dart";
 import "package:flutter/material.dart";
 import "package:flutter/services.dart";
 import "package:google_sign_in/google_sign_in.dart";
 import 'package:image_picker/image_picker.dart';
 import "package:sentry_flutter/sentry_flutter.dart";
 
+import "../../../utils/email_validator.dart";
+import "../../../utils/secure_storage.dart";
+import "../../../widgets/common/loading_indicator.dart";
 import "../../../models/user_profile.dart";
 import "../../../services/internet_connectivity.dart";
 import "../../../services/user_service.dart";

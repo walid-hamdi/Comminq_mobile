@@ -1,9 +1,10 @@
 import 'dart:async';
-import 'package:comminq/utils/constants.dart';
-import 'package:comminq/utils/secure_storage.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../utils/constants.dart';
+import '../../utils/secure_storage.dart';
 import '../../utils/helpers.dart';
 
 class SplashScreenView extends StatefulWidget {
@@ -27,7 +28,6 @@ class _SplashScreenViewState extends State<SplashScreenView> {
           navigateToRoute(context, Routes.home);
         } else {
           navigateToRoute(context, Routes.login);
-          
         }
       });
     });

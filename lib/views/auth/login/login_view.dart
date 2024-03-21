@@ -1,9 +1,9 @@
-import 'package:comminq/utils/email_validator.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 
+import '../../../utils/email_validator.dart';
 import '../../../services/auth_service.dart';
 import '../../../utils/constants.dart';
 import '../../../utils/helpers.dart';

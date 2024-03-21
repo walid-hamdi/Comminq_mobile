@@ -1,8 +1,8 @@
-import 'package:comminq/widgets/common/loading_indicator.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 
+import '../../widgets/common/loading_indicator.dart';
 import '../../utils/constants.dart';
 import '../../utils/secure_storage.dart';
 import '../../../models/user_profile.dart';

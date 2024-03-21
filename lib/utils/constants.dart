@@ -7,5 +7,4 @@ class Routes {
   static const String settings = "/settings";
   static const String verifiedEmail = "/verifiedEmail";
   static const String resetPassword = "/resetPassword";
-
 }
