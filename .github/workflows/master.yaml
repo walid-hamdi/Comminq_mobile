@@ -1,3 +1,64 @@
+# name: CI
+
+# on:
+#   push:
+#     branches:
+#       - development
+
+# env:
+#   ENDPOINT: ${{ secrets.ENDPOINT }}
+#   CLIENT_ID: ${{ secrets.CLIENT_ID }}
+#   SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+
+# jobs:
+#   flutter_test:
+#     name: Run flutter test and analyze
+#     runs-on: ubuntu-latest
+#     steps:
+#       - uses: actions/checkout@v2
+#       - uses: actions/setup-java@v1
+#         with:
+#           java-version: "12.x"
+#       - uses: subosito/flutter-action@v1
+#         with:
+#           channel: "stable"
+#       - run: flutter pub get
+#       - run: flutter analyze
+#       - run: flutter test
+
+#   build_apk:
+#     name: Build Flutter (Android)
+#     needs: [flutter_test]
+#     runs-on: ubuntu-latest
+#     steps:
+#       - uses: actions/checkout@v2
+#       - uses: actions/setup-java@v1
+#         with:
+#           java-version: "12.x"
+#       - uses: subosito/flutter-action@v1
+#         with:
+#           channel: "stable"
+#       - run: flutter pub get
+#       - run: flutter clean
+#       - run: flutter build apk --release
+
+#       - name: Generate Signing Report
+#         run: |
+#           cd android
+#           ./gradlew signingReport > signing_report.txt
+
+#       - name: Upload Signing Report Artifact
+#         uses: actions/upload-artifact@v2
+#         with:
+#           name: signing-report
+#           path: android/signing_report.txt
+
+#       - name: Upload APK
+#         uses: actions/upload-artifact@v2
+#         with:
+#           name: app.apk
+#           path: build/app/outputs/apk/release/app-release.apk
+
 name: CI
 
 on:
@@ -40,21 +101,25 @@ jobs:
           channel: "stable"
       - run: flutter pub get
       - run: flutter clean
-      - run: flutter build apk --release
 
-      - name: Generate Signing Report
-        run: |
-          cd android
-          ./gradlew signingReport > signing_report.txt
+      # Generate production keystore
+      # - name: Generate production keystore
+      #   run: |
+      #     keytool -genkey -v -keystore ${{ github.workspace }}/android/app/production.keystore -alias production -keyalg RSA -keysize 2048 -validity 10000 -storepass ${{ secrets.KEYSTORE_PASSWORD }} -keypass ${{ secrets.KEY_PASSWORD }} -dname "CN=Walid, OU=Comminq, O=Comminq, L=Kairouan, S=Kairouan, C=TN"
 
-      - name: Upload Signing Report Artifact
-        uses: actions/upload-artifact@v2
-        with:
-          name: signing-report
-          path: android/signing_report.txt
+      # - run: flutter build apk --release
+
+      # - name: Sign APK with production keystore
+      #   run: |
+      #     jarsigner -verbose -sigalg SHA1withRSA -digestalg SHA1 -keystore ${{ github.workspace }}/android/app/production.keystore ${{ github.workspace }}/android/app/build/app/outputs/apk/release/app-release.apk production -storepass ${{ secrets.KEYSTORE_PASSWORD }} -keypass ${{ secrets.KEY_PASSWORD }}
+      #     zipalign -v -p 4 ${{ github.workspace }}/android/app/build/app/outputs/apk/release/app-release.apk ${{ github.workspace }}/android/app/build/app/outputs/apk/release/app-release-aligned.apk
+
+      # - name: Display SHA-1 Fingerprint
+      #   run: |
+      #     keytool -list -v -keystore ${{ github.workspace }}/android/app/production.keystore -storepass ${{ secrets.KEYSTORE_PASSWORD }} -keypass ${{ secrets.KEY_PASSWORD }} | grep SHA1: | awk '{print $NF}'
 
       - name: Upload APK
         uses: actions/upload-artifact@v2
         with:
           name: app.apk
-          path: build/app/outputs/apk/release/app-release.apk
+          path: ${{ github.workspace }}/android/app/build/app/outputs/apk/release/app-release-aligned.apk
