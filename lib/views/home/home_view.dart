@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:sentry_flutter/sentry_flutter.dart';
 
-import '../../environment.dart';
+import '../../widgets/common/loading_indicator.dart';
 import '../../models/user_profile.dart';
 import '../../services/internet_connectivity.dart';
 import '../../services/user_service.dart';
@@ -21,9 +22,8 @@ class HomeView extends StatefulWidget {
 }
 
 class _HomeViewState extends State<HomeView> {
-  final _secureStorage = TokenManager();
   int _selectedIndex = 0;
-  UserProfile? _userProfile;
+  late UserProfile _userProfile;
   bool isLoading = false;
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
@@ -45,125 +45,15 @@ class _HomeViewState extends State<HomeView> {
     ),
   ];
 
-  void _performLogout(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Confirmation'),
-          content: const Text('Are you sure you want to logout?'),
-          actions: [
-            Padding(
-              padding: const EdgeInsets.only(right: 2.0),
-              child: ElevatedButton(
-                onPressed: () {
-                  Navigator.of(context).pop();
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.grey[300],
-                  foregroundColor: Colors.black,
-                ),
-                child: const Text('Cancel'),
-              ),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                _logout(context);
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red,
-                foregroundColor: Colors.white,
-              ),
-              child: const Text('Logout'),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  void _logout(BuildContext context) {
-    _secureStorage.deleteToken().then((_) {
-      final googleSignIn = GoogleSignIn(
-        clientId: Environment.clientId,
-      );
-      googleSignIn.signOut().then((_) {
-        return navigateToRoute(context, Routes.login);
-      });
-      navigateToRoute(context, Routes.login);
-    }).catchError((error) {
-      debugPrint('Error deleting token from secure storage: $error');
-    });
-  }
-
-  void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
-  }
-
-  void _fetchUserProfile() {
-    // check the internet here
-    InternetConnectivity.checkConnectivity(context).then((isConnected) {
-      if (isConnected) {
-        _performUserProfile();
-      }
-    });
-  }
-
-  void _performUserProfile() {
-    setState(() {
-      isLoading = true;
-    });
-
-    userHttpService.profile().then((response) {
-      final profile = response;
-      final profileUsername = profile.name;
-      final profileEmail = profile.email;
-      final profilePicture = profile.picture;
-      final profilePassword = profile.password;
-
-      final userProfile = UserProfile(
-        id: profile.id,
-        username: profileUsername,
-        email: profileEmail,
-        picture: profilePicture,
-        password: profilePassword,
-      );
-
-      setState(() {
-        _userProfile = userProfile;
-      });
-    }).catchError((error) {
-      return;
-      // final String errorMessage = error.response.toString();
-      // showErrorDialog(
-      //   context: context,
-      //   title: "Retrieve Profile Error",
-      //   content: errorMessage,
-      // );
-    }).whenComplete(() {
-      setState(() {
-        isLoading = false;
-      });
-    });
-  }
-
   @override
   void initState() {
     super.initState();
+
     _fetchUserProfile();
   }
 
   @override
   Widget build(BuildContext context) {
-    final String? profilePicture = _userProfile?.picture;
-    final bool hasProfilePicture =
-        profilePicture != null && profilePicture.isNotEmpty;
-
-    debugPrint("profile Picture $profilePicture");
-
     if (isLoading) {
       return const Scaffold(
         body: Center(
@@ -184,8 +74,7 @@ class _HomeViewState extends State<HomeView> {
             child: Padding(
               padding: const EdgeInsets.all(8.0),
               child: CustomAvatar(
-                profilePicture: profilePicture,
-                hasProfilePicture: hasProfilePicture,
+                profilePicture: _userProfile.picture,
               ),
             ),
           ),
@@ -211,9 +100,7 @@ class _HomeViewState extends State<HomeView> {
                   ),
                   child: const Row(
                     children: [
-                      SizedBox(
-                          width:
-                              10), // Add 10 pixels left padding for the hint text
+                      SizedBox(width: 10),
                       Icon(
                         Icons.search,
                         color: Colors.grey,
@@ -255,18 +142,21 @@ class _HomeViewState extends State<HomeView> {
         ),
         drawer: DrawerWidget(
           userProfile: _userProfile,
-          profilePicture: profilePicture,
-          hasProfilePicture: hasProfilePicture,
+          profilePicture: _userProfile.picture,
           onSettingsPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => SettingsView(
-                  userProfile: _userProfile!,
-                  onUpdateProfile: _fetchUserProfile,
+            if (_userProfile.id.isNotEmpty) {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => SettingsView(
+                    userProfile: _userProfile,
+                    onUpdateProfile: _fetchUserProfile,
+                  ),
                 ),
-              ),
-            );
+              );
+            } else {
+              _performLogout(context);
+            }
           },
           onLogoutPressed: () {
             _performLogout(context);
@@ -276,7 +166,11 @@ class _HomeViewState extends State<HomeView> {
         bottomNavigationBar: BottomNavigationBar(
           type: BottomNavigationBarType.fixed,
           currentIndex: _selectedIndex,
-          onTap: _onItemTapped,
+          onTap: (index) {
+            setState(() {
+              _selectedIndex = index;
+            });
+          },
           items: const <BottomNavigationBarItem>[
             BottomNavigationBarItem(
               icon: Icon(Icons.home),
@@ -302,5 +196,138 @@ class _HomeViewState extends State<HomeView> {
         ),
       ),
     );
+  }
+
+  void _fetchUserProfile() {
+    InternetConnectivity.checkConnectivity(context).then((isConnected) {
+      if (isConnected) {
+        setState(() {
+          isLoading = true;
+          _userProfile =
+              UserProfile(id: "", username: "", email: "", picture: "");
+        });
+
+        userHttpService.profile().then((response) {
+          if (response.statusCode == 200) {
+            final userProfile = UserProfile(
+              id: response.data['_id'].toString(),
+              username: response.data['name'].toString(),
+              email: response.data['email'].toString(),
+              picture: response.data['picture'].toString(),
+              googleLogin: response.data['googleLogin'] as bool,
+              isVerified: response.data['isVerified'] as bool,
+            );
+
+            if (userProfile.isVerified != null &&
+                userProfile.isVerified == false) {
+              return navigateToRoute(context, Routes.verifiedEmail);
+            }
+
+            setState(() {
+              _userProfile = userProfile;
+            });
+          }
+        }).catchError((error, stackTrace) {
+          if (error.response.data['error'] ==
+              'Email is not verified. Please verify your email.') {
+            navigateToRoute(context, Routes.verifiedEmail,
+                arguments: {'email': error.response.data['email'] as String});
+            return;
+          }
+        }).whenComplete(() {
+          setState(() {
+            isLoading = false;
+          });
+        });
+      }
+    });
+  }
+
+  void _performLogout(BuildContext context) {
+    showDialog(
+      barrierDismissible: false,
+      context: context,
+      builder: (BuildContext context) {
+        return StatefulBuilder(builder: (context, setState) {
+          return AlertDialog(
+            title: const Text(
+              'Confirmation',
+              style: TextStyle(
+                fontSize: 18,
+              ),
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  'Are you sure you want to logout?',
+                ),
+                const SizedBox(
+                  height: 15,
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    ElevatedButton(
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.grey[300],
+                        foregroundColor: Colors.black,
+                      ),
+                      child: const Text(
+                        'Cancel',
+                        style: TextStyle(fontSize: 14),
+                      ),
+                    ),
+                    const SizedBox(
+                      width: 5,
+                    ),
+                    ElevatedButton(
+                      onPressed: () {
+                        _logout(setState);
+                        Navigator.of(context).pop();
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.red,
+                        foregroundColor: Colors.white,
+                      ),
+                      child: !isLoading
+                          ? const Text(
+                              'Logout',
+                              style: TextStyle(fontSize: 14),
+                            )
+                          : const LoadingIndicator(),
+                    ),
+                  ],
+                )
+              ],
+            ),
+          );
+        });
+      },
+    );
+  }
+
+  void _logout(setState) async {
+    final secureStorage = TokenManager();
+
+    setState(() {
+      isLoading = true;
+    });
+    try {
+      await secureStorage.deleteToken();
+      await GoogleSignIn().signOut();
+      if (mounted) {
+        return navigateToRoute(context, Routes.login);
+      }
+    } catch (error, stackTracer) {
+      Sentry.captureException(error, stackTrace: stackTracer);
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
+    }
   }
 }

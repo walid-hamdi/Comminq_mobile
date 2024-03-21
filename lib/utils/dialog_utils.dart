@@ -9,7 +9,10 @@ void showErrorDialog({
     context: context,
     builder: (BuildContext context) {
       return AlertDialog(
-        title: Text(title),
+        title: Text(
+          title,
+          style: const TextStyle(fontSize: 16),
+        ),
         content: Text(content),
         actions: [
           TextButton(
