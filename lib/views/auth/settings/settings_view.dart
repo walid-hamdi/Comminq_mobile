@@ -325,125 +325,133 @@ class _SettingsViewState extends State<SettingsView> {
       barrierDismissible: false,
       context: context,
       builder: (BuildContext context) {
-        return StatefulBuilder(
-          builder: (BuildContext context, StateSetter setState) {
-            return AlertDialog(
-              title: const Text(
-                'Change Password',
-                style: TextStyle(
-                  fontSize: 18,
+        return GestureDetector(
+          onTap: () => hideKeyboard(context),
+          child: StatefulBuilder(
+            builder: (BuildContext context, StateSetter setState) {
+              return AlertDialog(
+                title: const Text(
+                  'Change Password',
+                  style: TextStyle(
+                    fontSize: 18,
+                  ),
                 ),
-              ),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Form(
-                    key: formKey,
+                content: SingleChildScrollView(
+                  child: SizedBox(
+                    width: 300,
                     child: Column(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        if (widget.userProfile.googleLogin != null &&
-                            widget.userProfile.googleLogin == false)
-                          CustomTextField(
-                            enable: !_isLoading,
-                            controller: currentPasswordController,
-                            labelText: 'Current password',
-                            showSuffixIcon: true,
-                            obscureText: true,
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'Please enter your current password';
-                              }
-                              return null;
-                            },
+                        Form(
+                          key: formKey,
+                          child: Column(
+                            children: [
+                              if (widget.userProfile.googleLogin != null &&
+                                  widget.userProfile.googleLogin == false)
+                                CustomTextField(
+                                  enable: !_isLoading,
+                                  controller: currentPasswordController,
+                                  labelText: 'Current password',
+                                  showSuffixIcon: true,
+                                  obscureText: true,
+                                  validator: (value) {
+                                    if (value == null || value.isEmpty) {
+                                      return 'Please enter your current password';
+                                    }
+                                    return null;
+                                  },
+                                ),
+                              const SizedBox(height: 16),
+                              CustomTextField(
+                                enable: !_isLoading,
+                                controller: newPasswordController,
+                                labelText: 'New password',
+                                showSuffixIcon: true,
+                                obscureText: true,
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return 'Please enter your new password';
+                                  }
+                                  return null;
+                                },
+                              ),
+                              CustomTextField(
+                                enable: !_isLoading,
+                                controller: newPasswordConfirmController,
+                                labelText: 'Confirm new password',
+                                showSuffixIcon: true,
+                                obscureText: true,
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return 'Please enter your confirmation password';
+                                  }
+                                  return null;
+                                },
+                              ),
+                            ],
                           ),
-                        const SizedBox(height: 16),
-                        CustomTextField(
-                          enable: !_isLoading,
-                          controller: newPasswordController,
-                          labelText: 'New password',
-                          showSuffixIcon: true,
-                          obscureText: true,
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Please enter your new password';
-                            }
-                            return null;
-                          },
                         ),
-                        CustomTextField(
-                          enable: !_isLoading,
-                          controller: newPasswordConfirmController,
-                          labelText: 'Confirm new password',
-                          showSuffixIcon: true,
-                          obscureText: true,
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Please enter your confirmation password';
-                            }
-                            return null;
-                          },
+                        const SizedBox(
+                          height: 15,
                         ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            ElevatedButton(
+                              onPressed: () {
+                                Navigator.of(context).pop();
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.grey[300],
+                                foregroundColor: Colors.black,
+                              ),
+                              child: const Text(
+                                'Cancel',
+                                style: TextStyle(fontSize: 14),
+                              ),
+                            ),
+                            const SizedBox(
+                              width: 5,
+                            ),
+                            ElevatedButton(
+                              onPressed: _isLoading
+                                  ? null
+                                  : () {
+                                      if (formKey.currentState!.validate()) {
+                                        if (newPasswordController.text !=
+                                            newPasswordConfirmController.text) {
+                                          return showErrorDialog(
+                                              context: context,
+                                              title: 'Confirmation password',
+                                              content: "Passwords must match.");
+                                        }
+                                        _changePassword(
+                                          currentPasswordController.text,
+                                          newPasswordController.text,
+                                          setState,
+                                        );
+                                      }
+                                    },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.green,
+                                foregroundColor: Colors.white,
+                              ),
+                              child: !_isLoading
+                                  ? const Text(
+                                      "Update",
+                                      style: TextStyle(fontSize: 14),
+                                    )
+                                  : const LoadingIndicator(),
+                            )
+                          ],
+                        )
                       ],
                     ),
                   ),
-                  const SizedBox(
-                    height: 15,
-                  ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      ElevatedButton(
-                        onPressed: () {
-                          Navigator.of(context).pop();
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.grey[300],
-                          foregroundColor: Colors.black,
-                        ),
-                        child: const Text(
-                          'Cancel',
-                          style: TextStyle(fontSize: 14),
-                        ),
-                      ),
-                      const SizedBox(
-                        width: 5,
-                      ),
-                      ElevatedButton(
-                        onPressed: _isLoading
-                            ? null
-                            : () {
-                                if (formKey.currentState!.validate()) {
-                                  if (newPasswordController.text !=
-                                      newPasswordConfirmController.text) {
-                                    return showErrorDialog(
-                                        context: context,
-                                        title: 'Confirmation password',
-                                        content: "Passwords must match.");
-                                  }
-                                  _changePassword(
-                                    currentPasswordController.text,
-                                    newPasswordController.text,
-                                    setState,
-                                  );
-                                }
-                              },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.green,
-                          foregroundColor: Colors.white,
-                        ),
-                        child: !_isLoading
-                            ? const Text(
-                                "Update",
-                                style: TextStyle(fontSize: 14),
-                              )
-                            : const LoadingIndicator(),
-                      )
-                    ],
-                  )
-                ],
-              ),
-            );
-          },
+                ),
+              );
+            },
+          ),
         );
       },
     );
