@@ -263,11 +263,10 @@ class _SettingsViewState extends State<SettingsView> {
                         onPressed: () async {
                           if (newEmail != widget.userProfile.email) {
                             try {
+                              final navigate = Navigator.of(context);
                               await secureStorage.deleteToken();
                               await GoogleSignIn().signOut();
-                              if (mounted) {
-                                return navigateToRoute(context, Routes.login);
-                              }
+                              navigate.pushReplacementNamed(Routes.login);
                             } catch (error, stackTrace) {
                               Sentry.captureException(error,
                                   stackTrace: stackTrace);
@@ -275,7 +274,6 @@ class _SettingsViewState extends State<SettingsView> {
                           }
 
                           widget.onUpdateProfile();
-                          Navigator.of(context).pop();
                           Navigator.popUntil(
                             _scaffoldKey.currentContext!,
                             ModalRoute.withName(Routes.home),
